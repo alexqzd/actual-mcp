@@ -97,36 +97,6 @@ export const setupTools = (server: Server, enableWrite: boolean): void => {
         return error(`Unknown tool ${name}`);
       }
       // Execute the requested tool
-      switch (name) {
-        case 'get-transactions': {
-          // TODO: Validate against schema
-          return getTransactionsHandler(args as unknown as GetTransactionsArgs);
-        }
-
-        case 'spending-by-category': {
-          return spendingByCategoryHandler(args as unknown as SpendingByCategoryArgs);
-        }
-
-        case 'monthly-summary': {
-          return monthlySummaryHandler(args as unknown as MonthlySummaryArgs);
-        }
-
-        case 'balance-history': {
-          return balanceHistoryHandler(args as unknown as BalanceHistoryArgs);
-        }
-
-        case 'get-accounts': {
-          return getAccountsHandler();
-        }
-
-        case 'create-transaction': {
-          return createTransactionHandler(args as unknown as CreateTransactionArgs);
-        }
-
-        default:
-          return error(`Unknown tool ${name}`);
-      }
-
       // @ts-expect-error: Argument type is handled by Zod schema validation
       return tool.handler(args);
     } catch (err) {
