@@ -42,6 +42,7 @@ import * as updateRule from './rules/update-rule/index.js';
 import * as spendingByCategory from './spending-by-category/index.js';
 import * as updateTransaction from './update-transaction/index.js';
 import * as createTransaction from './create-transaction/index.js';
+import * as deleteTransaction from './delete-transaction/index.js';
 
 const readTools = [
   getTransactions,
@@ -69,6 +70,7 @@ const writeTools = [
   deleteRule,
   updateTransaction,
   createTransaction,
+  deleteTransaction,
 ];
 
 export const setupTools = (server: Server, enableWrite: boolean): void => {
@@ -94,7 +96,7 @@ export const setupTools = (server: Server, enableWrite: boolean): void => {
 
       const tool = allTools.find((t) => t.schema.name === name);
       if (!tool) {
-        return error(`Unknown tool ${name}`);
+        return error(`Unknown tool ${name} not found`);
       }
       // Execute the requested tool
       // @ts-expect-error: Argument type is handled by Zod schema validation

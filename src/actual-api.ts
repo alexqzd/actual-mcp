@@ -244,3 +244,11 @@ export async function addTransactions(
   await initActualApi();
   await api.addTransactions(accountId, transactions, options);
 }
+
+/**
+ * Delete a transaction (ensures API is initialized)
+ */
+export async function deleteTransaction(id: string): Promise<unknown> {
+  await initActualApi();
+  return api.deleteTransaction(id);
+}
