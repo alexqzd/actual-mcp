@@ -245,6 +245,36 @@ export async function addTransactions(
   await api.addTransactions(accountId, transactions, options);
 }
 
+export async function getBudgetMonths(): Promise<unknown> {
+  await initActualApi();
+  return api.getBudgetMonths();
+}
+
+export async function getBudgetMonth(monthString: string): Promise<unknown> {
+  await initActualApi();
+  return api.getBudgetMonth(monthString);
+}
+
+export async function setBudgetAmount(month: string, categoryId: string, amount: number): Promise<void> {
+  await initActualApi();
+  return api.setBudgetAmount(month, categoryId, amount);
+}
+
+export async function setBudgetCarryover(month: string, categoryId: string, carryover: boolean): Promise<void> {
+  await initActualApi();
+  return api.setBudgetCarryover(month, categoryId, carryover);
+}
+
+export async function holdBudgetForNextMonth(month: string, amount: number): Promise<void> {
+  await initActualApi();
+  await api.holdBudgetForNextMonth(month, amount);
+}
+
+export async function resetBudgetHold(month: string): Promise<void> {
+  await initActualApi();
+  return api.resetBudgetHold(month);
+}
+
 /**
  * Delete a transaction (ensures API is initialized)
  */
