@@ -136,7 +136,7 @@ export class CreateTransactionDataFetcher {
     };
 
     // Add the transaction
-    await addTransactions(input.accountId, [transaction], { learnCategories: true });
+    await addTransactions(input.accountId, [transaction], { learnCategories: true, runTransfers: true });
 
     return {
       transactionId: 'created', // The API doesn't return the created transaction ID directly
