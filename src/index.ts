@@ -274,6 +274,14 @@ server.setRequestHandler(SetLevelRequestSchema, (request: any) => {
   return {};
 });
 
+// Handle unhandled promise rejections and exceptions to prevent crashes
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+});
+
 process.on('SIGINT', () => {
   console.error('SIGINT received, shutting down server');
   server.close();
@@ -289,5 +297,5 @@ main()
   })
   .catch((error: unknown) => {
     console.error('Server error:', error);
-    process.exit(1);
+    // Do not exit on server errors to keep server running
   });

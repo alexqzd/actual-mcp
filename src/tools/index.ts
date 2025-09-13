@@ -110,9 +110,10 @@ export const setupTools = (server: Server, enableWrite: boolean): void => {
       if (!tool) {
         return error(`Unknown tool ${name} not found`);
       }
-      // Execute the requested tool
+      // Execute the requested tool and await result to catch errors
       // @ts-expect-error: Argument type is handled by Zod schema validation
-      return tool.handler(args);
+      const result = await tool.handler(args);
+      return result;
     } catch (err) {
       console.error(`Error executing tool ${request.params.name}:`, err);
       return errorFromCatch(err);
