@@ -210,12 +210,12 @@ async function main(): Promise<void> {
 
   // Validate environment variables
   if (!process.env.ACTUAL_DATA_DIR && !process.env.ACTUAL_SERVER_URL) {
-    console.error('Warning: Neither ACTUAL_DATA_DIR nor ACTUAL_SERVER_URL is set.');
+    console.warn('Warning: Neither ACTUAL_DATA_DIR nor ACTUAL_SERVER_URL is set.');
   }
 
   if (process.env.ACTUAL_SERVER_URL && !process.env.ACTUAL_PASSWORD) {
-    console.error('Warning: ACTUAL_SERVER_URL is set but ACTUAL_PASSWORD is not.');
-    console.error('If your server requires authentication, initialization will fail.');
+    console.warn('Warning: ACTUAL_SERVER_URL is set but ACTUAL_PASSWORD is not.');
+    console.warn('If your server requires authentication, initialization will fail.');
   }
 
   if (useSse) {
@@ -225,9 +225,9 @@ async function main(): Promise<void> {
 
     // Log bearer auth status
     if (enableBearer) {
-      console.error('Bearer authentication enabled for SSE endpoints');
+      console.info('Bearer authentication enabled for SSE endpoints');
     } else {
-      console.error('Bearer authentication disabled - endpoints are public');
+      console.info('Bearer authentication disabled - endpoints are public');
     }
 
     // Placeholder for future HTTP transport (stateless)
@@ -255,7 +255,7 @@ async function main(): Promise<void> {
     app.listen(resolvedPort, (error: any) => { if (error) {
         console.error('Error:', error);
       } else {
-        console.error(`Actual Budget MCP Server (SSE) started on port ${resolvedPort}`);
+        console.info(`Actual Budget MCP Server (SSE) started on port ${resolvedPort}`);
       }
     });
   } else {
@@ -270,7 +270,7 @@ setupTools(server, enableWrite);
 setupPrompts(server);
 
 server.setRequestHandler(SetLevelRequestSchema, (request: any) => {
-  console.log(`--- Logging level: ${request.params.level}`);
+  console.info(`--- Logging level: ${request.params.level}`);
   return {};
 });
 

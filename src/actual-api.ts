@@ -33,7 +33,7 @@ export async function initActualApi(): Promise<void> {
   }
 
   try {
-    console.error('Initializing Actual Budget API...');
+    console.info('Initializing Actual Budget API...');
     const dataDir = process.env.ACTUAL_DATA_DIR || DEFAULT_DATA_DIR;
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true });
@@ -51,11 +51,11 @@ export async function initActualApi(): Promise<void> {
 
     // Use specified budget or the first one
     const budgetId: string = process.env.ACTUAL_BUDGET_SYNC_ID || budgets[0].cloudFileId || budgets[0].id || '';
-    console.error(`Loading budget: ${budgetId}`);
+    console.info(`Loading budget: ${budgetId}`);
     await api.downloadBudget(budgetId);
 
     initialized = true;
-    console.error('Actual Budget API initialized successfully');
+    console.info('Actual Budget API initialized successfully');
   } catch (error) {
     console.error('Failed to initialize Actual Budget API:', error);
     initializationError = error instanceof Error ? error : new Error(String(error));
