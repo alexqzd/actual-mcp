@@ -15,18 +15,51 @@ import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import dotenv from 'dotenv';
 import express, { NextFunction, Request, Response } from 'express';
-import { parseArgs } from 'node:util';
+import { parseArgs } from 'util';
 import { initActualApi, shutdownActualApi } from './actual-api.js';
 import { fetchAllAccounts } from './core/data/fetch-accounts.js';
 import { setupPrompts } from './prompts.js';
 import { setupResources } from './resources.js';
 import { setupTools } from './tools/index.js';
-import { SetLevelRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { z } from 'zod';
 
-dotenv.config({ path: '.env' });
+// Logging support
+// Define log level literals and enum schema
+const LevelLiterals = ['emergency', 'alert', 'critical', 'error', 'warning', 'notice', 'info', 'debug'] as const;
+const LevelEnum = z.enum(LevelLiterals);
+type McpLogLevel = typeof LevelLiterals[number];
+const LogLevelMap: Record<McpLogLevel, number> = {
+  emergency: 0,
+  alert: 1,
+  critical: 2,
+  error: 3,
+  warning: 4,
+  notice: 5,
+  info: 6,
+  debug: 7,
+};
+// Valid levels array
+const validLogLevels = LevelLiterals;
+
+// Per-logger log levels (root "." only)
+let logLevels: Record<string, number> = { ".": LogLevelMap.info };
+
+const getEffectiveLogLevel = (loggerName: string): number =>
+  logLevels[loggerName] ?? logLevels["."];
+
+const shouldLog = (level: McpLogLevel, loggerName = "."): boolean =>
+  LogLevelMap[level] <= getEffectiveLogLevel(loggerName);
+
+// Helper to send a structured log message
+const sendLog = (level: McpLogLevel, logger: string, data: object) => {
+  if (shouldLog(level, logger)) {
+    server.sendLoggingMessage({ level, logger, data });
+  }
+};
 
 // Initialize the MCP server
-const server = new Server(
+let server: Server;
+server = new Server(
   {
     name: 'Actual Budget',
     version: '1.0.0',
@@ -40,6 +73,32 @@ const server = new Server(
     },
   }
 );
+
+// Setup logging request schemas and handlers
+const SetLevelsRequestSchema = z.object({
+  method: z.literal('logging/setLevels'),
+  params: z.object({ levels: z.record(z.string(), LevelEnum).nullable() }),
+});
+server.setRequestHandler(SetLevelsRequestSchema, (request: any) => {
+  const levels = request.params.levels as Record<string, McpLogLevel | null>;
+  for (const name in levels) {
+    const lvl = levels[name];
+    if (lvl === null) delete logLevels[name];
+    else logLevels[name] = LogLevelMap[lvl];
+  }
+  return {};
+});
+
+// Define SetLevel schema with level enum
+const SetLevelRequestSchema = z.object({
+  method: z.literal('logging/setLevel'),
+  params: z.object({ level: LevelEnum }),
+});
+server.setRequestHandler(SetLevelRequestSchema, (request: any) => {
+  const lvl = request.params.level as McpLogLevel;
+  logLevels['.'] = LogLevelMap[lvl];
+  return {};
+});
 
 // Argument parsing
 const {
@@ -179,11 +238,10 @@ async function main(): Promise<void> {
     app.get('/sse', bearerAuth, (req: Request, res: Response) => {
       transport = new SSEServerTransport('/messages', res);
       server.connect(transport).then(() => {
-        console.log = (message: string) => server.sendLoggingMessage({ level: 'info', message });
+        console.log = (message: string) => sendLog('info', 'main', { message });
+        console.error = (message: string) => sendLog('error', 'main', { message });
 
-        console.error = (message: string) => server.sendLoggingMessage({ level: 'error', message });
-
-        console.error(`Actual Budget MCP Server (SSE) started on port ${resolvedPort}`);
+        sendLog('info', 'main', { message: `Actual Budget MCP Server (SSE) started on port ${resolvedPort}` });
       });
     });
     app.post('/messages', bearerAuth, async (req: Request, res: Response) => {
@@ -194,8 +252,7 @@ async function main(): Promise<void> {
       }
     });
 
-    app.listen(resolvedPort, (error) => {
-      if (error) {
+    app.listen(resolvedPort, (error: any) => { if (error) {
         console.error('Error:', error);
       } else {
         console.error(`Actual Budget MCP Server (SSE) started on port ${resolvedPort}`);
@@ -204,7 +261,7 @@ async function main(): Promise<void> {
   } else {
     const transport = new StdioServerTransport();
     await server.connect(transport);
-    console.error('Actual Budget MCP Server (stdio) started');
+    sendLog('info', 'main', { message: 'Actual Budget MCP Server (stdio) started' });
   }
 }
 
@@ -212,7 +269,7 @@ setupResources(server);
 setupTools(server, enableWrite);
 setupPrompts(server);
 
-server.setRequestHandler(SetLevelRequestSchema, (request) => {
+server.setRequestHandler(SetLevelRequestSchema, (request: any) => {
   console.log(`--- Logging level: ${request.params.level}`);
   return {};
 });
@@ -226,17 +283,8 @@ process.on('SIGINT', () => {
 main()
   .then(() => {
     if (!useSse) {
-      // TODO: Setup proper logging level change. Messages are available in the notification of MCP Inspector
-      console.log = (message: string) =>
-        server.sendLoggingMessage({
-          level: 'info',
-          message,
-        });
-      console.error = (message: string) =>
-        server.sendLoggingMessage({
-          level: 'error',
-          message,
-        });
+      console.log = (message: string) => sendLog('info', 'main', { message });
+      console.error = (message: string) => sendLog('error', 'main', { message });
     }
   })
   .catch((error: unknown) => {
