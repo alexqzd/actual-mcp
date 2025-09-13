@@ -10,6 +10,9 @@ export function mapTransaction(
 ): Transaction {
   const category = categories.find((c) => c.id === entity.category);
   const payee = payees.find((p) => p.id === entity.payee);
+
+  // if the entity has subtransactions, map them recursively
+
   return {
     id: entity.id,
     account: entity.account,
@@ -20,6 +23,13 @@ export function mapTransaction(
     category_name: category?.name,
     payee: entity.payee,
     payee_name: payee?.name,
+    subtransactions: entity.subtransactions
+      ? entity.subtransactions.map((sub: any) => {
+          const mapped = mapTransaction(sub, categories, payees);
+          console.log('Mapped subtransaction:', mapped);
+          return mapped;
+        })
+      : undefined,
   };
 }
 

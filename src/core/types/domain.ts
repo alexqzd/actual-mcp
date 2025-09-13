@@ -19,6 +19,7 @@ export interface Transaction {
   category?: string;
   category_name?: string;
   notes?: string;
+  subtransactions?: Transaction[];
 }
 
 export interface Category {
