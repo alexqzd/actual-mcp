@@ -53,12 +53,12 @@ import * as resetBudgetHold from './budget/reset-budget-hold/index.js';
 const readTools = [
   getTransactions,
   spendingByCategory,
-  monthlySummary,
+  // monthlySummary, // Summary is not accurate enough yet
   balanceHistory,
   getAccounts,
   getGroupedCategories,
   getPayees,
-  getRules,
+  // getRules, // We don't want the AI to see user rules yet
   getBudgetMonths,
   getBudgetMonth,
 ];
@@ -73,9 +73,9 @@ const writeTools = [
   createPayee,
   updatePayee,
   deletePayee,
-  createRule,
-  updateRule,
-  deleteRule,
+  // createRule, // We don't want the AI to modify user rules yet
+  // updateRule,
+  // deleteRule,
   updateTransaction,
   createTransaction,
   deleteTransaction,
