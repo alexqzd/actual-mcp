@@ -9,7 +9,7 @@ export class CreateTransactionInputParser {
     }
 
     const argsObj = args as Record<string, unknown>;
-    const { accountId, date, amount, payee, category, categoryGroup, notes, cleared } = argsObj;
+    const { accountId, date, amount, payeeName, categoryName, categoryGroup, notes, cleared } = argsObj;
 
     // Validate required fields
     if (!accountId || typeof accountId !== 'string') {
@@ -30,20 +30,13 @@ export class CreateTransactionInputParser {
       throw new Error('date must be in YYYY-MM-DD format');
     }
 
-    // Both category and categoryGroup cannot be specified
-    if (category && categoryGroup) {
-      throw new Error(
-        'Cannot specify both category and categoryGroup. Use category for existing categories or categoryGroup to create new ones.'
-      );
-    }
 
     return {
       accountId,
       date,
       amount,
-      payee: typeof payee === 'string' ? payee : undefined,
-      category: typeof category === 'string' ? category : undefined,
-      categoryGroup: typeof categoryGroup === 'string' ? categoryGroup : undefined,
+      payeeName: typeof payeeName === 'string' ? payeeName : undefined,
+      categoryName: typeof categoryName === 'string' ? categoryName : undefined,
       notes: typeof notes === 'string' ? notes : undefined,
       cleared: typeof cleared === 'boolean' ? cleared : true, // Default to cleared
     };

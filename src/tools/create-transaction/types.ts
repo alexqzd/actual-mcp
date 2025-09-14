@@ -4,9 +4,8 @@ export interface CreateTransactionInput {
   accountId: string;
   date: string;
   amount: number;
-  payee?: string;
-  category?: string;
-  categoryGroup?: string;
+  payeeName?: string;
+  categoryName?: string;
   notes?: string;
   cleared?: boolean;
 }

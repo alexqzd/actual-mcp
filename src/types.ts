@@ -76,9 +76,8 @@ export const CreateTransactionArgsSchema = z.object({
   accountId: z.string(),
   date: z.string(),
   amount: z.number(),
-  payee: z.string().optional(),
-  category: z.string().optional(),
-  categoryGroup: z.string().optional(),
+  payeeName: z.string().optional(),
+  categoryName: z.string().optional(),
   notes: z.string().optional(),
   cleared: z.boolean().optional(),
 });

@@ -7,6 +7,7 @@ import {
   getCategoryGroups,
   createPayee,
   createCategory,
+  createCategoryGroup,
   addTransactions,
 } from '../../actual-api.js';
 import type { CreateTransactionInput, EntityCreationResult } from './types.js';
@@ -33,64 +34,6 @@ export class CreateTransactionDataFetcher {
   }
 
   /**
-   * Ensures category exists, creating it if necessary
-   */
-  async ensureCategoryExists(
-    categoryName?: string,
-    categoryGroupName?: string
-  ): Promise<{ categoryId?: string; created: boolean }> {
-    if (!categoryName && !categoryGroupName) {
-      return { created: false };
-    }
-
-    const categories = await getCategories();
-    const categoryGroups = await getCategoryGroups();
-
-    // Si se proporciona categoryName, buscar categoría existente
-    if (categoryName) {
-      const existingCategory = categories.find((c) => c.name.toLowerCase() === categoryName.toLowerCase());
-      if (existingCategory) {
-        return { categoryId: existingCategory.id, created: false };
-      }
-
-      // Si no existe, buscar grupo adecuado
-      const defaultGroup = categoryGroups.find((g) => !g.is_income) || categoryGroups[0];
-      if (!defaultGroup) {
-        throw new Error('No category groups available to create category');
-      }
-
-      const categoryId = await createCategory({ name: categoryName, group: defaultGroup.id });
-      return { categoryId, created: true };
-    }
-
-    // Si se proporciona categoryGroupName, crear categoría con ese nombre en el grupo
-    if (categoryGroupName) {
-      const categoryId = await this.createCategoryInGroup(categoryGroupName, categoryGroups);
-      return { categoryId, created: true };
-    }
-
-    return { created: false };
-  }
-
-  private async createCategoryInGroup(
-    categoryGroupName: string,
-    categoryGroups: Array<{ id: string; name: string; is_income?: boolean }>
-  ): Promise<string> {
-    // Buscar grupo existente o usar el primero que no sea de ingresos
-    let targetGroup = categoryGroups.find((g) => g.name.toLowerCase() === categoryGroupName.toLowerCase());
-
-    if (!targetGroup) {
-      targetGroup = categoryGroups.find((g) => !g.is_income) || categoryGroups[0];
-      if (!targetGroup) {
-        throw new Error('No suitable category group found');
-      }
-    }
-
-    // Crear categoría usando objeto
-    return await createCategory({ name: categoryGroupName, group: targetGroup.id });
-  }
-
-  /**
    * Validates account exists
    */
   async validateAccount(accountId: string): Promise<void> {
@@ -114,13 +57,25 @@ export class CreateTransactionDataFetcher {
     await this.validateAccount(input.accountId);
 
     // Ensure payee exists
-    const { payeeId, created: createdPayee } = await this.ensurePayeeExists(input.payee);
+    const { payeeId, created: createdPayee } = await this.ensurePayeeExists(input.payeeName);
 
-    // Ensure category exists
-    const { categoryId, created: createdCategory } = await this.ensureCategoryExists(
-      input.category,
-      input.categoryGroup
-    );
+    // Ensure category exists if provided
+    let categoryId: string | undefined;
+    if (!input.categoryName) {
+      // No category provided
+      categoryId = undefined;
+    } else {
+      // Try to find existing category
+      const categories = await getCategories();
+      let targetCategory = categories.find((c) => c.name.toLowerCase() === input.categoryName!.toLowerCase());
+
+      if (!targetCategory) {
+      // If category not found, return error
+      throw new Error(`Category '${input.categoryName}' not found`);
+      }
+
+      categoryId = targetCategory.id;
+    }
 
     // Convert amount to cents (Actual uses integer cents)
     const amountInCents = Math.round(input.amount * 100);
@@ -143,7 +98,6 @@ export class CreateTransactionDataFetcher {
       payeeId,
       categoryId,
       createdPayee,
-      createdCategory,
     };
   }
 }
