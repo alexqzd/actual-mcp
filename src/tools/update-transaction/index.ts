@@ -33,7 +33,7 @@ export async function handler(args: UpdateTransactionArgs): Promise<CallToolResu
     }
 
     if (amount !== undefined) {
-      updateData.amount = amount;
+      updateData.amount = amount * 100; // Convert to cents
     }
 
     // Update the transaction using the Actual API
