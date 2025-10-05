@@ -89,7 +89,11 @@ describe('CreateTransactionDataFetcher', () => {
 
       // Mock core transaction utilities
       vi.mocked(coreTransactions.validateAccount).mockResolvedValue(undefined);
-      vi.mocked(coreTransactions.findCategoryByName).mockResolvedValue({ id: 'cat-1', name: 'Food', group_id: 'grp1' } as any);
+      vi.mocked(coreTransactions.findCategoryByName).mockResolvedValue({
+        id: 'cat-1',
+        name: 'Food',
+        group_id: 'grp1',
+      } as any);
       vi.mocked(coreTransactions.mapSubtransactions).mockResolvedValue([]);
 
       const result = await fetcher.createTransaction(input);
@@ -101,20 +105,17 @@ describe('CreateTransactionDataFetcher', () => {
         createdPayee: true,
       });
 
-      expect(actualApi.importTransactions).toHaveBeenCalledWith(
-        'account-1',
-        [
-          {
-            date: '2023-12-15',
-            amount: 2550, // Amount in cents
-            payee: 'payee-new',
-            category: 'cat-1',
-            notes: 'Test transaction',
-            cleared: true,
-            subtransactions: undefined,
-          },
-        ]
-      );
+      expect(actualApi.importTransactions).toHaveBeenCalledWith('account-1', [
+        {
+          date: '2023-12-15',
+          amount: 2550, // Amount in cents
+          payee: 'payee-new',
+          category: 'cat-1',
+          notes: 'Test transaction',
+          cleared: true,
+          subtransactions: undefined,
+        },
+      ]);
 
       // Should call updateTransaction as workaround for Actual's auto-categorization
       expect(actualApp.default.updateTransaction).toHaveBeenCalledWith('txn-123', { category: 'cat-1' });
