@@ -11,7 +11,13 @@ import { UpdateTransactionReportGenerator } from './report-generator.js';
 export const schema = {
   name: 'update-transaction',
   description:
-    'Update an existing transaction with new date, category, payee, notes, amount, cleared status, or subtransactions',
+    'Update an existing transaction with new date, category, payee, notes, amount, cleared status, or subtransactions. ' +
+    '\n\nIMPORTANT LIMITATIONS WITH SPLIT TRANSACTIONS:\n' +
+    '- Updating parent split transactions (date, notes, amount) may not persist correctly in the UI due to Actual Budget API limitations\n' +
+    '- To update split transactions reliably: update individual subtransactions using their IDs, or delete and recreate the split\n' +
+    '- Updating category on subtransactions works, but verify changes in the UI\n' +
+    '- DO NOT pass an empty subtransactions array - this will corrupt the transaction and may crash the app\n' +
+    '- When updating subtransaction amounts, ensure the total matches the parent amount to avoid "Amount left" errors',
   inputSchema: zodToJsonSchema(UpdateTransactionArgsSchema) as ToolInput,
 };
 

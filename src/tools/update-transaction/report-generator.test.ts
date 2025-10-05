@@ -14,10 +14,13 @@ describe('UpdateTransactionReportGenerator', () => {
 
       const result = generator.generate(input);
 
-      expect(result).toBe('Successfully updated transaction txn-123 (updated: date)');
+      expect(result).toContain('✅ Successfully updated transaction txn-123 (updated: date)');
+      expect(result).toContain(
+        '⚠️  If this is a split transaction parent, updates to date/amount/notes may not persist'
+      );
     });
 
-    it('should generate report for cleared status update', () => {
+    it('should generate report for cleared status update without warnings', () => {
       const input: UpdateTransactionInput = {
         transactionId: 'txn-123',
         cleared: true,
@@ -25,10 +28,10 @@ describe('UpdateTransactionReportGenerator', () => {
 
       const result = generator.generate(input);
 
-      expect(result).toBe('Successfully updated transaction txn-123 (updated: cleared)');
+      expect(result).toBe('✅ Successfully updated transaction txn-123 (updated: cleared)');
     });
 
-    it('should generate report for multiple updates including date and cleared', () => {
+    it('should generate report for multiple updates including date and cleared with warning', () => {
       const input: UpdateTransactionInput = {
         transactionId: 'txn-123',
         date: '2025-03-15',
@@ -41,12 +44,13 @@ describe('UpdateTransactionReportGenerator', () => {
 
       const result = generator.generate(input);
 
-      expect(result).toBe(
-        'Successfully updated transaction txn-123 (updated: date, category, payee, notes, amount, cleared)'
+      expect(result).toContain(
+        '✅ Successfully updated transaction txn-123 (updated: date, category, payee, notes, amount, cleared)'
       );
+      expect(result).toContain('⚠️  If this is a split transaction parent');
     });
 
-    it('should generate report for single field update', () => {
+    it('should generate report for amount update with warning', () => {
       const input: UpdateTransactionInput = {
         transactionId: 'txn-123',
         amount: 50.5,
@@ -54,10 +58,11 @@ describe('UpdateTransactionReportGenerator', () => {
 
       const result = generator.generate(input);
 
-      expect(result).toBe('Successfully updated transaction txn-123 (updated: amount)');
+      expect(result).toContain('✅ Successfully updated transaction txn-123 (updated: amount)');
+      expect(result).toContain('⚠️  If this is a split transaction parent');
     });
 
-    it('should generate report for subtransactions update', () => {
+    it('should generate report for subtransactions update with warning', () => {
       const input: UpdateTransactionInput = {
         transactionId: 'txn-123',
         subtransactions: [
@@ -70,10 +75,11 @@ describe('UpdateTransactionReportGenerator', () => {
 
       const result = generator.generate(input);
 
-      expect(result).toBe('Successfully updated transaction txn-123 (updated: subtransactions)');
+      expect(result).toContain('✅ Successfully updated transaction txn-123 (updated: subtransactions)');
+      expect(result).toContain('⚠️  Updating subtransactions array has known limitations');
     });
 
-    it('should generate report with all possible fields', () => {
+    it('should generate report with all possible fields with subtransactions warning only', () => {
       const input: UpdateTransactionInput = {
         transactionId: 'txn-456',
         date: '2025-01-01',
@@ -93,9 +99,12 @@ describe('UpdateTransactionReportGenerator', () => {
 
       const result = generator.generate(input);
 
-      expect(result).toBe(
-        'Successfully updated transaction txn-456 (updated: date, category, payee, notes, amount, cleared, subtransactions)'
+      expect(result).toContain(
+        '✅ Successfully updated transaction txn-456 (updated: date, category, payee, notes, amount, cleared, subtransactions)'
       );
+      expect(result).toContain('⚠️  Updating subtransactions array has known limitations');
+      // Should not have the split parent warning when subtransactions is present
+      expect(result).not.toContain('⚠️  If this is a split transaction parent');
     });
 
     it('should handle transaction with only transactionId', () => {
@@ -105,7 +114,30 @@ describe('UpdateTransactionReportGenerator', () => {
 
       const result = generator.generate(input);
 
-      expect(result).toBe('Successfully updated transaction txn-123');
+      expect(result).toBe('✅ Successfully updated transaction txn-123');
+    });
+
+    it('should generate report for category update without warnings', () => {
+      const input: UpdateTransactionInput = {
+        transactionId: 'txn-123',
+        categoryId: 'cat-456',
+      };
+
+      const result = generator.generate(input);
+
+      expect(result).toBe('✅ Successfully updated transaction txn-123 (updated: category)');
+    });
+
+    it('should generate report for notes update with warning', () => {
+      const input: UpdateTransactionInput = {
+        transactionId: 'txn-123',
+        notes: 'Updated notes',
+      };
+
+      const result = generator.generate(input);
+
+      expect(result).toContain('✅ Successfully updated transaction txn-123 (updated: notes)');
+      expect(result).toContain('⚠️  If this is a split transaction parent');
     });
   });
 });

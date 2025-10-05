@@ -19,6 +19,15 @@ vi.mock('../../core/transactions/index.js', () => ({
   convertToCents: vi.fn((amount: number) => Math.round(amount * 100)),
 }));
 
+// Mock logger
+vi.mock('../../core/logger.js', () => ({
+  logger: {
+    info: vi.fn(),
+    warning: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+
 describe('UpdateTransactionDataFetcher', () => {
   let fetcher: UpdateTransactionDataFetcher;
   let mockUpdateTransaction: ReturnType<typeof vi.fn>;
@@ -158,6 +167,32 @@ describe('UpdateTransactionDataFetcher', () => {
             notes: '',
           },
         ],
+      });
+    });
+
+    it('should throw error when trying to set subtransactions to empty array', async () => {
+      const input: UpdateTransactionInput = {
+        transactionId: 'txn-123',
+        subtransactions: [],
+      };
+
+      await expect(fetcher.updateTransaction(input)).rejects.toThrow(
+        'Cannot set subtransactions to an empty array'
+      );
+
+      expect(mockUpdateTransaction).not.toHaveBeenCalled();
+    });
+
+    it('should not throw error for empty subtransactions if subtransactions is undefined', async () => {
+      const input: UpdateTransactionInput = {
+        transactionId: 'txn-123',
+        amount: 100,
+      };
+
+      await fetcher.updateTransaction(input);
+
+      expect(mockUpdateTransaction).toHaveBeenCalledWith('txn-123', {
+        amount: 10000,
       });
     });
   });
