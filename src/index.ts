@@ -10,10 +10,26 @@
  * - View transactions with filtering
  * - Generate financial statistics and analysis
  */
+
+// CRITICAL: Intercept all console.* calls BEFORE any other imports
+// The @actual-app/api library writes directly to stdout, which breaks stdio JSON-RPC
+// We must suppress these outputs in stdio mode
+const originalConsoleLog = console.log;
+const originalConsoleInfo = console.info;
+const originalConsoleWarn = console.warn;
+const originalConsoleError = console.error;
+const originalConsoleDebug = console.debug;
+
+// Suppress all console output - we'll use MCP logging instead
+console.log = () => {};
+console.info = () => {};
+console.warn = () => {};
+console.error = () => {};
+console.debug = () => {};
+
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import dotenv from 'dotenv';
 import express, { NextFunction, Request, Response } from 'express';
 import { parseArgs } from 'util';
 import { initActualApi, shutdownActualApi } from './actual-api.js';
@@ -22,44 +38,15 @@ import { setupPrompts } from './prompts.js';
 import { setupResources } from './resources.js';
 import { setupTools } from './tools/index.js';
 import { z } from 'zod';
+import { logger, type McpLogLevel } from './core/logger.js';
 
 // Logging support
-// Define log level literals and enum schema
+// Define log level enum schema for request validation
 const LevelLiterals = ['emergency', 'alert', 'critical', 'error', 'warning', 'notice', 'info', 'debug'] as const;
 const LevelEnum = z.enum(LevelLiterals);
-type McpLogLevel = typeof LevelLiterals[number];
-const LogLevelMap: Record<McpLogLevel, number> = {
-  emergency: 0,
-  alert: 1,
-  critical: 2,
-  error: 3,
-  warning: 4,
-  notice: 5,
-  info: 6,
-  debug: 7,
-};
-// Valid levels array
-const validLogLevels = LevelLiterals;
-
-// Per-logger log levels (root "." only)
-let logLevels: Record<string, number> = { ".": LogLevelMap.info };
-
-const getEffectiveLogLevel = (loggerName: string): number =>
-  logLevels[loggerName] ?? logLevels["."];
-
-const shouldLog = (level: McpLogLevel, loggerName = "."): boolean =>
-  LogLevelMap[level] <= getEffectiveLogLevel(loggerName);
-
-// Helper to send a structured log message
-const sendLog = (level: McpLogLevel, logger: string, data: object) => {
-  if (shouldLog(level, logger)) {
-    server.sendLoggingMessage({ level, logger, data });
-  }
-};
 
 // Initialize the MCP server
-let server: Server;
-server = new Server(
+const server = new Server(
   {
     name: 'Actual Budget',
     version: '1.0.0',
@@ -77,15 +64,11 @@ server = new Server(
 // Setup logging request schemas and handlers
 const SetLevelsRequestSchema = z.object({
   method: z.literal('logging/setLevels'),
-  params: z.object({ levels: z.record(z.string(), LevelEnum).nullable() }),
+  params: z.object({ levels: z.record(z.string(), LevelEnum.nullable()) }),
 });
 server.setRequestHandler(SetLevelsRequestSchema, (request: any) => {
   const levels = request.params.levels as Record<string, McpLogLevel | null>;
-  for (const name in levels) {
-    const lvl = levels[name];
-    if (lvl === null) delete logLevels[name];
-    else logLevels[name] = LogLevelMap[lvl];
-  }
+  logger.setLevels(levels);
   return {};
 });
 
@@ -96,7 +79,7 @@ const SetLevelRequestSchema = z.object({
 });
 server.setRequestHandler(SetLevelRequestSchema, (request: any) => {
   const lvl = request.params.level as McpLogLevel;
-  logLevels['.'] = LogLevelMap[lvl];
+  logger.setLevel('.', lvl);
   return {};
 });
 
@@ -151,7 +134,7 @@ const bearerAuth = (req: Request, res: Response, next: NextFunction): void => {
   const expectedToken = process.env.BEARER_TOKEN;
 
   if (!expectedToken) {
-    console.error('BEARER_TOKEN environment variable not set');
+    logger.error('auth', { message: 'BEARER_TOKEN environment variable not set' });
     res.status(500).json({
       error: 'Server configuration error',
     });
@@ -176,23 +159,23 @@ const bearerAuth = (req: Request, res: Response, next: NextFunction): void => {
 async function main(): Promise<void> {
   // If testing resources, verify connectivity and list accounts, then exit
   if (testResources) {
-    console.log('Testing resources...');
+    logger.info('test', { message: 'Testing resources...' });
     try {
       await initActualApi();
       const accounts = await fetchAllAccounts();
-      console.log(`Found ${accounts.length} account(s).`);
-      accounts.forEach((account) => console.log(`- ${account.id}: ${account.name}`));
-      console.log('Resource test passed.');
+      logger.info('test', { message: `Found ${accounts.length} account(s).` });
+      accounts.forEach((account) => logger.info('test', { message: `- ${account.id}: ${account.name}` }));
+      logger.info('test', { message: 'Resource test passed.' });
       await shutdownActualApi();
       process.exit(0);
     } catch (error) {
-      console.error('Resource test failed:', error);
+      logger.error('test', { message: 'Resource test failed', error });
       process.exit(1);
     }
   }
 
   if (testCustom) {
-    console.log('Initializing custom test...');
+    logger.info('test', { message: 'Initializing custom test...' });
     try {
       await initActualApi();
 
@@ -200,22 +183,22 @@ async function main(): Promise<void> {
 
       // ----------------
 
-      console.log('Custom test passed.');
+      logger.info('test', { message: 'Custom test passed.' });
       await shutdownActualApi();
       process.exit(0);
     } catch (error) {
-      console.error('Custom test failed:', error);
+      logger.error('test', { message: 'Custom test failed', error });
     }
   }
 
   // Validate environment variables
   if (!process.env.ACTUAL_DATA_DIR && !process.env.ACTUAL_SERVER_URL) {
-    console.warn('Warning: Neither ACTUAL_DATA_DIR nor ACTUAL_SERVER_URL is set.');
+    logger.warning('main', { message: 'Neither ACTUAL_DATA_DIR nor ACTUAL_SERVER_URL is set' });
   }
 
   if (process.env.ACTUAL_SERVER_URL && !process.env.ACTUAL_PASSWORD) {
-    console.warn('Warning: ACTUAL_SERVER_URL is set but ACTUAL_PASSWORD is not.');
-    console.warn('If your server requires authentication, initialization will fail.');
+    logger.warning('main', { message: 'ACTUAL_SERVER_URL is set but ACTUAL_PASSWORD is not' });
+    logger.warning('main', { message: 'If your server requires authentication, initialization will fail' });
   }
 
   if (useSse) {
@@ -225,9 +208,9 @@ async function main(): Promise<void> {
 
     // Log bearer auth status
     if (enableBearer) {
-      console.info('Bearer authentication enabled for SSE endpoints');
+      logger.info('auth', { message: 'Bearer authentication enabled for SSE endpoints' });
     } else {
-      console.info('Bearer authentication disabled - endpoints are public');
+      logger.info('auth', { message: 'Bearer authentication disabled - endpoints are public' });
     }
 
     // Placeholder for future HTTP transport (stateless)
@@ -238,10 +221,8 @@ async function main(): Promise<void> {
     app.get('/sse', bearerAuth, (req: Request, res: Response) => {
       transport = new SSEServerTransport('/messages', res);
       server.connect(transport).then(() => {
-        console.log = (message: string) => sendLog('info', 'main', { message });
-        console.error = (message: string) => sendLog('error', 'main', { message });
-
-        sendLog('info', 'main', { message: `Actual Budget MCP Server (SSE) started on port ${resolvedPort}` });
+        logger.connect(server);
+        logger.info('main', { message: `Actual Budget MCP Server (SSE) started on port ${resolvedPort}` });
       });
     });
     app.post('/messages', bearerAuth, async (req: Request, res: Response) => {
@@ -252,16 +233,18 @@ async function main(): Promise<void> {
       }
     });
 
-    app.listen(resolvedPort, (error: any) => { if (error) {
-        console.error('Error:', error);
+    app.listen(resolvedPort, (error: any) => {
+      if (error) {
+        logger.error('main', { message: 'Server listen error', error });
       } else {
-        console.info(`Actual Budget MCP Server (SSE) started on port ${resolvedPort}`);
+        logger.info('main', { message: `Actual Budget MCP Server (SSE) started on port ${resolvedPort}` });
       }
     });
   } else {
     const transport = new StdioServerTransport();
     await server.connect(transport);
-    sendLog('info', 'main', { message: 'Actual Budget MCP Server (stdio) started' });
+    logger.connect(server);
+    logger.info('main', { message: 'Actual Budget MCP Server (stdio) started' });
   }
 }
 
@@ -269,33 +252,37 @@ setupResources(server);
 setupTools(server, enableWrite);
 setupPrompts(server);
 
-server.setRequestHandler(SetLevelRequestSchema, (request: any) => {
-  console.info(`--- Logging level: ${request.params.level}`);
-  return {};
-});
-
 // Handle unhandled promise rejections and exceptions to prevent crashes
+// IMPORTANT: These handlers prevent Node.js from printing stack traces to stderr,
+// which would break stdio JSON-RPC protocol
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  logger.error('main', { message: 'Unhandled Rejection', promise: String(promise), reason: String(reason) });
+  // Don't exit on unhandled rejections in stdio mode
 });
 process.on('uncaughtException', (error) => {
-  console.error('Uncaught Exception:', error);
+  logger.error('main', { message: 'Uncaught Exception', error: error.message, stack: error.stack });
+  // In stdio mode, we can't let Node crash with a stack trace to stderr
+  // Log it via MCP and continue running
 });
 
 process.on('SIGINT', () => {
-  console.error('SIGINT received, shutting down server');
+  logger.info('main', { message: 'SIGINT received, shutting down server' });
   server.close();
   process.exit(0);
 });
 
-main()
-  .then(() => {
-    if (!useSse) {
-      console.log = (message: string) => sendLog('info', 'main', { message });
-      console.error = (message: string) => sendLog('error', 'main', { message });
-    }
-  })
-  .catch((error: unknown) => {
-    console.error('Server error:', error);
-    // Do not exit on server errors to keep server running
-  });
+// Enable console fallback for SSE mode (allows console.* before connection)
+if (useSse) {
+  logger.setConsoleEnabled(true);
+  // Restore console methods for SSE mode since it doesn't use stdio
+  console.log = originalConsoleLog;
+  console.info = originalConsoleInfo;
+  console.warn = originalConsoleWarn;
+  console.error = originalConsoleError;
+  console.debug = originalConsoleDebug;
+}
+
+main().catch((error: unknown) => {
+  logger.error('main', { message: 'Server error', error });
+  // Do not exit on server errors to keep server running
+});

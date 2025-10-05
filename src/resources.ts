@@ -11,6 +11,7 @@ import { Account, Transaction } from './types.js';
 import { formatAmount, formatDate, getDateRange } from './utils.js';
 import { initActualApi, shutdownActualApi } from './actual-api.js';
 import { fetchAllAccounts } from './core/data/fetch-accounts.js';
+import { logger } from './core/logger.js';
 
 export const setupResources = (server: Server): void => {
   /**
@@ -29,7 +30,7 @@ export const setupResources = (server: Server): void => {
         })),
       };
     } catch (error) {
-      console.error('Error listing resources:', error);
+      logger.error('resources', { message: 'Error listing resources', error });
       throw error;
     } finally {
       await shutdownActualApi();
@@ -171,7 +172,7 @@ To view transactions for this account, use the get-transactions tool.`;
         ],
       };
     } catch (error) {
-      console.error('Error reading resource:', error);
+      logger.error('resources', { message: 'Error reading resource', error });
       throw error;
     }
   });

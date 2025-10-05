@@ -11,6 +11,7 @@ import {
 } from '@actual-app/api/@types/loot-core/src/server/api-models.js';
 import { RuleEntity, TransactionEntity } from '@actual-app/api/@types/loot-core/src/types/models/index.js';
 import ReconcileTransactionsResult from '@actual-app/api/@types/loot-core/src/server/accounts/sync.js';
+import { logger } from './core/logger.js';
 
 const DEFAULT_DATA_DIR: string = path.resolve(os.homedir() || '.', '.actual');
 
@@ -34,7 +35,7 @@ export async function initActualApi(): Promise<void> {
   }
 
   try {
-    console.info('Initializing Actual Budget API...');
+    logger.info('actual-api', { message: 'Initializing Actual Budget API...' });
     const dataDir = process.env.ACTUAL_DATA_DIR || DEFAULT_DATA_DIR;
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true });
@@ -52,13 +53,13 @@ export async function initActualApi(): Promise<void> {
 
     // Use specified budget or the first one
     const budgetId: string = process.env.ACTUAL_BUDGET_SYNC_ID || budgets[0].cloudFileId || budgets[0].id || '';
-    console.info(`Loading budget: ${budgetId}`);
+    logger.info('actual-api', { message: 'Loading budget', budgetId });
     await api.downloadBudget(budgetId);
 
     initialized = true;
-    console.info('Actual Budget API initialized successfully');
+    logger.info('actual-api', { message: 'Actual Budget API initialized successfully' });
   } catch (error) {
-    console.error('Failed to initialize Actual Budget API:', error);
+    logger.error('actual-api', { message: 'Failed to initialize Actual Budget API', error });
     initializationError = error instanceof Error ? error : new Error(String(error));
     throw initializationError;
   } finally {
@@ -279,11 +280,11 @@ export async function importTransactions(
       amount: st.amount,
       category: st.category ?? undefined,
       notes: st.notes,
-    }))
+    })),
   }));
   const result = await api.importTransactions(accountId, importPayload);
   let added_id = result.added[0];
-  let updated_id = result.updated[0];
+  const updated_id = result.updated[0];
   // if added is undefined, it means the transaction was already there, use updated instead
   if (added_id === undefined) {
     added_id = updated_id;

@@ -2,6 +2,7 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { GetPromptRequestSchema, ListPromptsRequestSchema, GetPromptResult } from '@modelcontextprotocol/sdk/types.js';
 import { FinancialInsightsArgs, BudgetReviewArgs } from './types.js';
 import { getDateRange } from './utils.js';
+import { logger } from './core/logger.js';
 
 export const promptsSchema = [
   {
@@ -194,7 +195,7 @@ export const setupPrompts = (server: Server): void => {
           throw new Error(`Unknown prompt: ${name}`);
       }
     } catch (error) {
-      console.error(`Error getting prompt ${request.params.name}:`, error);
+      logger.error('prompts', { message: `Error getting prompt ${request.params.name}`, error });
       throw error instanceof Error ? error : new Error(String(error));
     }
   });

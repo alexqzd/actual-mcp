@@ -18,6 +18,7 @@ import { handler as monthlySummaryHandler } from './monthly-summary/index.js';
 import { handler as balanceHistoryHandler } from './balance-history/index.js';
 import { handler as createTransactionHandler } from './create-transaction/index.js';
 import { error, errorFromCatch } from '../utils/response.js';
+import { logger } from '../core/logger.js';
 import { handler as getAccountsHandler } from './get-accounts/index.js';
 
 import * as balanceHistory from './balance-history/index.js';
@@ -115,7 +116,7 @@ export const setupTools = (server: Server, enableWrite: boolean): void => {
       const result = await tool.handler(args);
       return result;
     } catch (err) {
-      console.error(`Error executing tool ${request.params.name}:`, err);
+      logger.error('tools', { message: `Error executing tool ${request.params.name}`, error: err });
       return errorFromCatch(err);
     } finally {
       await shutdownActualApi();

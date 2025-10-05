@@ -3,11 +3,7 @@ import type { Transaction } from '../types/domain.js';
 /**
  * Maps a TransactionEntity from the Actual API into a domain Transaction
  */
-export function mapTransaction(
-  entity: any,
-  categories: any[],
-  payees: any[]
-): Transaction {
+export function mapTransaction(entity: any, categories: any[], payees: any[]): Transaction {
   const category = categories.find((c) => c.id === entity.category);
   const payee = payees.find((p) => p.id === entity.payee);
 
@@ -24,11 +20,7 @@ export function mapTransaction(
     payee: entity.payee,
     payee_name: payee?.name,
     subtransactions: entity.subtransactions
-      ? entity.subtransactions.map((sub: any) => {
-          const mapped = mapTransaction(sub, categories, payees);
-          console.log('Mapped subtransaction:', mapped);
-          return mapped;
-        })
+      ? entity.subtransactions.map((sub: any) => mapTransaction(sub, categories, payees))
       : undefined,
   };
 }
