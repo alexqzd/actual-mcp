@@ -29,9 +29,7 @@ export interface SubtransactionOutput {
  * @param subtransactions - Array of subtransactions with category names
  * @returns Array of subtransactions with category IDs
  */
-export async function mapSubtransactions(
-  subtransactions: SubtransactionInput[]
-): Promise<SubtransactionOutput[]> {
+export async function mapSubtransactions(subtransactions: SubtransactionInput[]): Promise<SubtransactionOutput[]> {
   const categories = await getCategories();
 
   return subtransactions.map((sub) => ({

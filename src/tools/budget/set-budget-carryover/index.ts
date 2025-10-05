@@ -14,7 +14,7 @@ export const schema = {
       month: {
         type: 'string',
         description: 'The month in YYYY-MM format (e.g., "2025-09")',
-        pattern: '^\\d{4}-\\d{2}$'
+        pattern: '^\\d{4}-\\d{2}$',
       },
       categoryId: {
         type: 'string',
@@ -35,11 +35,15 @@ export async function handler(
   try {
     const { month, categoryId, carryover } = args;
     if (typeof month !== 'string' || typeof categoryId !== 'string' || typeof carryover !== 'boolean') {
-      return errorFromCatch('month must be a string in YYYY-MM format, categoryId must be a string, and carryover must be a boolean');
+      return errorFromCatch(
+        'month must be a string in YYYY-MM format, categoryId must be a string, and carryover must be a boolean'
+      );
     }
 
     await setBudgetCarryover(month, categoryId, carryover);
-    return successWithJson(`Successfully ${carryover ? 'enabled' : 'disabled'} budget carryover for category ${categoryId} in month ${month}`);
+    return successWithJson(
+      `Successfully ${carryover ? 'enabled' : 'disabled'} budget carryover for category ${categoryId} in month ${month}`
+    );
   } catch (err) {
     return errorFromCatch(err);
   }

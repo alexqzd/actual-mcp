@@ -22,11 +22,13 @@ export class UpdateTransactionInputParser {
       payeeId: typeof payeeId === 'string' ? payeeId : undefined,
       notes: typeof notes === 'string' ? notes : undefined,
       amount: typeof amount === 'number' ? amount : undefined,
-      subtransactions: Array.isArray(subtransactions) ? subtransactions.map((sub) => ({
-        amount: typeof sub.amount === 'number' ? sub.amount : 0,
-        categoryId: typeof sub.categoryId === 'string' ? sub.categoryId : '',
-        notes: typeof sub.notes === 'string' ? sub.notes : undefined,
-      })) : undefined,
+      subtransactions: Array.isArray(subtransactions)
+        ? subtransactions.map((sub) => ({
+            amount: typeof sub.amount === 'number' ? sub.amount : 0,
+            categoryId: typeof sub.categoryId === 'string' ? sub.categoryId : '',
+            notes: typeof sub.notes === 'string' ? sub.notes : undefined,
+          }))
+        : undefined,
     };
   }
 }

@@ -10,9 +10,7 @@ export class TransactionGrouper {
   ): Record<string, CategorySpending> {
     const spendingByCategory: Record<string, CategorySpending> = {};
     transactions.forEach((transaction) => {
-      const items = transaction.subtransactions?.length
-        ? transaction.subtransactions
-        : [transaction];
+      const items = transaction.subtransactions?.length ? transaction.subtransactions : [transaction];
       items.forEach((tx) => {
         if (!tx.category) return; // Skip uncategorized
         const categoryId = tx.category;

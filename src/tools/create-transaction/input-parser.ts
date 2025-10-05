@@ -30,7 +30,6 @@ export class CreateTransactionInputParser {
       throw new Error('date must be in YYYY-MM-DD format');
     }
 
-
     return {
       accountId,
       date,
@@ -39,11 +38,13 @@ export class CreateTransactionInputParser {
       categoryName: typeof categoryName === 'string' ? categoryName : undefined,
       notes: typeof notes === 'string' ? notes : undefined,
       cleared: typeof cleared === 'boolean' ? cleared : false, // Default to not cleared
-      subtransactions: Array.isArray(subtransactions) ? subtransactions.map((sub) => ({
-        amount: typeof sub.amount === 'number' ? sub.amount : 0,
-        categoryName: typeof sub.categoryName === 'string' ? sub.categoryName : '',
-        notes: typeof sub.notes === 'string' ? sub.notes : undefined,
-      })) : undefined,
+      subtransactions: Array.isArray(subtransactions)
+        ? subtransactions.map((sub) => ({
+            amount: typeof sub.amount === 'number' ? sub.amount : 0,
+            categoryName: typeof sub.categoryName === 'string' ? sub.categoryName : '',
+            notes: typeof sub.notes === 'string' ? sub.notes : undefined,
+          }))
+        : undefined,
     };
   }
 }

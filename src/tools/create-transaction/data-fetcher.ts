@@ -1,7 +1,12 @@
 // Handles entity creation and transaction insertion for create-transaction tool
 
 import { getPayees, createPayee, importTransactions } from '../../actual-api.js';
-import { convertToCents, findCategoryByName, validateAccount, mapSubtransactions } from '../../core/transactions/index.js';
+import {
+  convertToCents,
+  findCategoryByName,
+  validateAccount,
+  mapSubtransactions,
+} from '../../core/transactions/index.js';
 import type { CreateTransactionInput, EntityCreationResult } from './types.js';
 import api from '@actual-app/api';
 
@@ -25,7 +30,6 @@ export class CreateTransactionDataFetcher {
     const payeeId = await createPayee({ name: payeeName });
     return { payeeId, created: true };
   }
-
 
   /**
    * Creates the transaction after ensuring all entities exist

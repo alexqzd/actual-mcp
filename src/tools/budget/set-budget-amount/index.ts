@@ -15,7 +15,7 @@ export const schema = {
       month: {
         type: 'string',
         description: 'The month in YYYY-MM format (e.g., "2025-09")',
-        pattern: '^\\d{4}-\\d{2}$'
+        pattern: '^\\d{4}-\\d{2}$',
       },
       categoryId: {
         type: 'string',
@@ -36,14 +36,18 @@ export async function handler(
   try {
     const { month, categoryId, amount } = args;
     if (typeof month !== 'string' || typeof categoryId !== 'string' || typeof amount !== 'number') {
-      return errorFromCatch('month must be a string in YYYY-MM format, categoryId must be a string, and amount must be a number');
+      return errorFromCatch(
+        'month must be a string in YYYY-MM format, categoryId must be a string, and amount must be a number'
+      );
     }
 
     // Convert from dollars to cents for the API
     const amountInCents = Math.round(amount * 100);
     await setBudgetAmount(month, categoryId, amountInCents);
     const formattedAmount = formatAmount(amountInCents);
-    return successWithJson(`Successfully set budget amount for category ${categoryId} in month ${month} to ${formattedAmount}`);
+    return successWithJson(
+      `Successfully set budget amount for category ${categoryId} in month ${month} to ${formattedAmount}`
+    );
   } catch (err) {
     return errorFromCatch(err);
   }

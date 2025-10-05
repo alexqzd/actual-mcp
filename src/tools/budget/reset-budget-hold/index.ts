@@ -14,7 +14,7 @@ export const schema = {
       month: {
         type: 'string',
         description: 'The month in YYYY-MM format (e.g., "2025-09")',
-        pattern: '^\\d{4}-\\d{2}$'
+        pattern: '^\\d{4}-\\d{2}$',
       },
     },
     required: ['month'],

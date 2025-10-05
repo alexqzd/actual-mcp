@@ -47,9 +47,7 @@ describe('entity-lookup', () => {
     });
 
     it('should return undefined if payee not found', async () => {
-      vi.mocked(actualApi.getPayees).mockResolvedValue([
-        { id: 'payee1', name: 'Whole Foods' },
-      ] as any);
+      vi.mocked(actualApi.getPayees).mockResolvedValue([{ id: 'payee1', name: 'Whole Foods' }] as any);
 
       const result = await findPayeeByName('NonExistent');
       expect(result).toBeUndefined();
@@ -58,25 +56,19 @@ describe('entity-lookup', () => {
 
   describe('validateAccount', () => {
     it('should pass for valid open account', async () => {
-      vi.mocked(actualApi.getAccounts).mockResolvedValue([
-        { id: 'acc1', name: 'Checking', closed: false },
-      ] as any);
+      vi.mocked(actualApi.getAccounts).mockResolvedValue([{ id: 'acc1', name: 'Checking', closed: false }] as any);
 
       await expect(validateAccount('acc1')).resolves.not.toThrow();
     });
 
     it('should throw if account not found', async () => {
-      vi.mocked(actualApi.getAccounts).mockResolvedValue([
-        { id: 'acc1', name: 'Checking', closed: false },
-      ] as any);
+      vi.mocked(actualApi.getAccounts).mockResolvedValue([{ id: 'acc1', name: 'Checking', closed: false }] as any);
 
       await expect(validateAccount('nonexistent')).rejects.toThrow('Account with ID nonexistent not found');
     });
 
     it('should throw if account is closed', async () => {
-      vi.mocked(actualApi.getAccounts).mockResolvedValue([
-        { id: 'acc1', name: 'Old Checking', closed: true },
-      ] as any);
+      vi.mocked(actualApi.getAccounts).mockResolvedValue([{ id: 'acc1', name: 'Old Checking', closed: true }] as any);
 
       await expect(validateAccount('acc1')).rejects.toThrow('Account Old Checking is closed');
     });

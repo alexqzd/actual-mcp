@@ -20,8 +20,8 @@ describe('transaction-mapper', () => {
       ] as any);
 
       const input = [
-        { amount: 10.50, categoryName: 'Groceries', notes: 'Weekly shopping' },
-        { amount: 25.00, categoryName: 'gas' },
+        { amount: 10.5, categoryName: 'Groceries', notes: 'Weekly shopping' },
+        { amount: 25.0, categoryName: 'gas' },
       ];
 
       const result = await mapSubtransactions(input);
@@ -37,15 +37,11 @@ describe('transaction-mapper', () => {
         { id: 'cat1', name: 'Groceries', group_id: 'grp1' },
       ] as any);
 
-      const input = [
-        { amount: 10.50, categoryName: 'NonExistent' },
-      ];
+      const input = [{ amount: 10.5, categoryName: 'NonExistent' }];
 
       const result = await mapSubtransactions(input);
 
-      expect(result).toEqual([
-        { amount: 1050, category: undefined, notes: '' },
-      ]);
+      expect(result).toEqual([{ amount: 1050, category: undefined, notes: '' }]);
     });
 
     it('should handle empty array', async () => {

@@ -9,10 +9,7 @@ export async function fetchTransactionsForAccount(
   end: string
 ): Promise<Transaction[]> {
   // Fetch lookup data
-  const [categories, payees] = await Promise.all([
-    getCategories(),
-    getPayees(),
-  ]);
+  const [categories, payees] = await Promise.all([getCategories(), getPayees()]);
   // Fetch raw transactions
   const entities = await getTransactions(accountId, start, end);
   // Map to domain Transactions
@@ -24,14 +21,11 @@ export async function fetchAllOnBudgetTransactions(
   start: string,
   end: string
 ): Promise<Transaction[]> {
-  let transactions: Transaction[] = [];
+  const transactions: Transaction[] = [];
   const onBudgetAccounts = accounts.filter((a) => !a.offbudget && !a.closed);
   if (onBudgetAccounts.length === 0) return transactions;
   // Fetch lookup data once
-  const [categories, payees] = await Promise.all([
-    getCategories(),
-    getPayees(),
-  ]);
+  const [categories, payees] = await Promise.all([getCategories(), getPayees()]);
   // Aggregate mapped transactions
   for (const account of onBudgetAccounts) {
     const entities = await getTransactions(account.id, start, end);
@@ -40,18 +34,11 @@ export async function fetchAllOnBudgetTransactions(
   return transactions;
 }
 
-export async function fetchAllTransactions(
-  accounts: Account[],
-  start: string,
-  end: string
-): Promise<Transaction[]> {
-  let transactions: Transaction[] = [];
+export async function fetchAllTransactions(accounts: Account[], start: string, end: string): Promise<Transaction[]> {
+  const transactions: Transaction[] = [];
   if (accounts.length === 0) return transactions;
   // Fetch lookup data once
-  const [categories, payees] = await Promise.all([
-    getCategories(),
-    getPayees(),
-  ]);
+  const [categories, payees] = await Promise.all([getCategories(), getPayees()]);
   // Aggregate mapped transactions
   for (const account of accounts) {
     const entities = await getTransactions(account.id, start, end);

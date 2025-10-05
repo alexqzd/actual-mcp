@@ -35,10 +35,10 @@ export async function handler(
     if (typeof year !== 'number' || typeof month !== 'number') {
       return errorFromCatch('Year and month must be numbers');
     }
-    
+
     const monthString = `${year}-${String(month).padStart(2, '0')}`;
-    const rawBudgetMonth = await getBudgetMonth(monthString) as any;
-    
+    const rawBudgetMonth = (await getBudgetMonth(monthString)) as any;
+
     // Convert cents to dollars in the response
     const budgetMonth = {
       ...rawBudgetMonth,
@@ -61,9 +61,9 @@ export async function handler(
           received: cat.received / 100,
           budgeted: cat.budgeted / 100,
           spent: cat.spent / 100,
-          balance: cat.balance / 100
-        }))
-      }))
+          balance: cat.balance / 100,
+        })),
+      })),
     };
     return successWithJson(budgetMonth);
   } catch (err) {
