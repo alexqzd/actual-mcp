@@ -1,10 +1,14 @@
 // Unit tests for create-transaction input parser
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { CreateTransactionInputParser } from './input-parser.js';
 
 describe('CreateTransactionInputParser', () => {
-  const parser = new CreateTransactionInputParser();
+  let parser: CreateTransactionInputParser;
+
+  beforeEach(() => {
+    parser = new CreateTransactionInputParser();
+  });
 
   describe('parse - happy path', () => {
     it('should parse valid minimal input', () => {
@@ -20,11 +24,11 @@ describe('CreateTransactionInputParser', () => {
         accountId: 'account-123',
         date: '2023-12-15',
         amount: 25.5,
-        payee: undefined,
-        category: undefined,
-        categoryGroup: undefined,
+        payeeName: undefined,
+        categoryName: undefined,
         notes: undefined,
-        cleared: true, // default
+        cleared: false, // default
+        subtransactions: undefined,
       });
     });
 
@@ -33,8 +37,8 @@ describe('CreateTransactionInputParser', () => {
         accountId: 'account-123',
         date: '2023-12-15',
         amount: 25.5,
-        payee: 'Grocery Store',
-        category: 'Food',
+        payeeName: 'Grocery Store',
+        categoryName: 'Food',
         notes: 'Weekly groceries',
         cleared: false,
       };
@@ -45,11 +49,11 @@ describe('CreateTransactionInputParser', () => {
         accountId: 'account-123',
         date: '2023-12-15',
         amount: 25.5,
-        payee: 'Grocery Store',
-        category: 'Food',
-        categoryGroup: undefined,
+        payeeName: 'Grocery Store',
+        categoryName: 'Food',
         notes: 'Weekly groceries',
         cleared: false,
+        subtransactions: undefined,
       });
     });
   });
@@ -79,17 +83,6 @@ describe('CreateTransactionInputParser', () => {
       const input = { accountId: 'account-123', date: '12/15/2023', amount: 25.5 };
       expect(() => parser.parse(input)).toThrow('date must be in YYYY-MM-DD format');
     });
-
-    it('should throw error when both category and categoryGroup are specified', () => {
-      const input = {
-        accountId: 'account-123',
-        date: '2023-12-15',
-        amount: 25.5,
-        category: 'Food',
-        categoryGroup: 'Expenses',
-      };
-      expect(() => parser.parse(input)).toThrow('Cannot specify both category and categoryGroup');
-    });
   });
 
   describe('parse - edge cases', () => {
@@ -97,11 +90,11 @@ describe('CreateTransactionInputParser', () => {
       const input = {
         accountId: 'account-123',
         date: '2023-12-15',
-        amount: -50.0,
+        amount: -25.5,
       };
 
       const result = parser.parse(input);
-      expect(result.amount).toBe(-50.0);
+      expect(result.amount).toBe(-25.5);
     });
 
     it('should handle zero amounts', () => {

@@ -9,7 +9,7 @@ export class CreateTransactionInputParser {
     }
 
     const argsObj = args as Record<string, unknown>;
-    const { accountId, date, amount, payeeName, categoryName, categoryGroup, notes, cleared, subtransactions } = argsObj;
+    const { accountId, date, amount, payeeName, categoryName, notes, cleared, subtransactions } = argsObj;
 
     // Validate required fields
     if (!accountId || typeof accountId !== 'string') {

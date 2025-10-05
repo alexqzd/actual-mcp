@@ -1,9 +1,12 @@
-import api from '@actual-app/api';
+// Orchestrator for update-transaction tool
+
 import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import { initActualApi } from '../../actual-api.js';
 import { success, errorFromCatch } from '../../utils/response.js';
 import { UpdateTransactionArgsSchema, type UpdateTransactionArgs, ToolInput } from '../../types.js';
+import { UpdateTransactionInputParser } from './input-parser.js';
+import { UpdateTransactionDataFetcher } from './data-fetcher.js';
+import { UpdateTransactionReportGenerator } from './report-generator.js';
 
 export const schema = {
   name: 'update-transaction',
@@ -13,45 +16,16 @@ export const schema = {
 
 export async function handler(args: UpdateTransactionArgs): Promise<CallToolResult> {
   try {
-    await initActualApi();
+    // Parse and validate input
+    const input = new UpdateTransactionInputParser().parse(args);
 
-    const { transactionId, categoryId, payeeId, notes, amount, subtransactions } = args;
+    // Update transaction
+    await new UpdateTransactionDataFetcher().updateTransaction(input);
 
-    // Build update object with only provided fields
-    const updateData: Record<string, any> = {};
+    // Generate formatted report
+    const markdown = new UpdateTransactionReportGenerator().generate(input);
 
-    if (categoryId !== undefined) {
-      updateData.category = categoryId;
-    }
-
-    if (payeeId !== undefined) {
-      updateData.payee = payeeId;
-    }
-
-    if (notes !== undefined) {
-      updateData.notes = notes;
-    }
-
-    if (amount !== undefined) {
-      updateData.amount = amount * 100; // Convert to cents
-    }
-
-    if (subtransactions !== undefined) {
-      updateData.subtransactions = subtransactions.map((sub) => ({
-        amount: Math.round(sub.amount * 100), // Convert to cents
-        category: sub.categoryId,
-        notes: sub.notes || '',
-      }));
-    }
-
-    if (Object.keys(updateData).length === 0) {
-      return success('No fields to update provided.');
-    }
-
-    // Update the transaction using the Actual API
-    await api.updateTransaction(transactionId, updateData);
-
-    return success(`Successfully updated transaction ${transactionId}`);
+    return success(markdown);
   } catch (error) {
     return errorFromCatch(error);
   }

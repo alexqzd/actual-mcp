@@ -1,16 +1,7 @@
 // Handles entity creation and transaction insertion for create-transaction tool
 
-import {
-  getAccounts,
-  getPayees,
-  getCategories,
-  getCategoryGroups,
-  createPayee,
-  createCategory,
-  createCategoryGroup,
-  addTransactions,
-  importTransactions,
-} from '../../actual-api.js';
+import { getPayees, createPayee, importTransactions } from '../../actual-api.js';
+import { convertToCents, findCategoryByName, validateAccount, mapSubtransactions } from '../../core/transactions/index.js';
 import type { CreateTransactionInput, EntityCreationResult } from './types.js';
 import api from '@actual-app/api';
 
@@ -35,80 +26,50 @@ export class CreateTransactionDataFetcher {
     return { payeeId, created: true };
   }
 
-  /**
-   * Validates account exists
-   */
-  async validateAccount(accountId: string): Promise<void> {
-    const accounts = await getAccounts();
-    const account = accounts.find((a) => a.id === accountId);
-
-    if (!account) {
-      throw new Error(`Account with ID ${accountId} not found`);
-    }
-
-    if (account.closed) {
-      throw new Error(`Account ${account.name} is closed`);
-    }
-  }
 
   /**
    * Creates the transaction after ensuring all entities exist
    */
   async createTransaction(input: CreateTransactionInput): Promise<EntityCreationResult & { transactionId: string }> {
     // Validate account exists
-    await this.validateAccount(input.accountId);
+    await validateAccount(input.accountId);
 
     // Ensure payee exists
     const { payeeId, created: createdPayee } = await this.ensurePayeeExists(input.payeeName);
 
-    // Ensure category exists if provided
+    // Find category if provided
     let categoryId: string | undefined;
-    const categories = await getCategories();
-    if (!input.categoryName) {
-      // No category provided
-      categoryId = undefined;
-    } else {
-      // Try to find existing category
-      let targetCategory = categories.find((c) => c.name.toLowerCase() === input.categoryName!.toLowerCase());
-
-      if (!targetCategory) {
-      // If category not found, return error
-      throw new Error(`Category '${input.categoryName}' not found`);
+    if (input.categoryName) {
+      const category = await findCategoryByName(input.categoryName);
+      if (!category) {
+        throw new Error(`Category '${input.categoryName}' not found`);
       }
-
-      categoryId = targetCategory.id;
+      categoryId = category.id;
     }
-
-    // Convert amount to cents (Actual uses integer cents)
-    const amountInCents = Math.round(input.amount * 100);
 
     // Prepare transaction object
     const transaction = {
       date: input.date,
-      amount: amountInCents,
+      amount: convertToCents(input.amount),
       payee: payeeId || null,
       category: categoryId || null,
       notes: input.notes || '',
       cleared: input.cleared === undefined ? false : input.cleared,
-      subtransactions: input.subtransactions ? input.subtransactions.map((sub) => ({
-        amount: Math.round(sub.amount * 100),
-        category: categories.find((c) => c.name.toLowerCase() === sub.categoryName.toLowerCase())?.id,
-        notes: sub.notes || '',
-      })) : undefined,
+      subtransactions: input.subtransactions ? await mapSubtransactions(input.subtransactions) : undefined,
     };
 
     // Add the transaction
-    // await addTransactions(input.accountId, [transaction], { learnCategories: true, runTransfers: true });
-    let transactionID = await importTransactions(input.accountId, [transaction]);
+    const transactionID = await importTransactions(input.accountId, [transaction]);
 
-    // if a payee was provided, Actual will try to guess the category and ignore the one provided
-    // so we need to call the updateTransaction endpoint to set the correct category
-    // but only if a category was provided
+    // Workaround: Actual Budget's auto-categorization behavior
+    // When a payee is provided, Actual tries to guess the category and may ignore the one we set.
+    // We need to call updateTransaction to ensure the correct category is applied.
     if (input.categoryName && payeeId) {
       await api.updateTransaction(transactionID, { category: categoryId });
     }
 
-    // Actual clears transactions by default, so if the user specified cleared: false, we need to update it
+    // Workaround: Actual clears transactions by default during import
+    // If the user explicitly wants the transaction uncleared, we need to update it
     if (input.cleared === false) {
       await api.updateTransaction(transactionID, { cleared: false });
     }

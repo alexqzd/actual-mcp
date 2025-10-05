@@ -1,6 +1,7 @@
 // Generates formatted output for create-transaction tool
 
 import { formatAmount } from '../../utils.js';
+import { convertToCents } from '../../core/transactions/index.js';
 import type { CreateTransactionInput, EntityCreationResult } from './types.js';
 
 export class CreateTransactionReportGenerator {
@@ -14,7 +15,7 @@ export class CreateTransactionReportGenerator {
     report += `## Transaction Details\n\n`;
     report += `- **Transaction ID**: ${result.transactionId}\n`;
     report += `- **Date**: ${date}\n`;
-    report += `- **Amount**: ${formatAmount(amount * 100)}\n`;
+    report += `- **Amount**: ${formatAmount(convertToCents(amount))}\n`;
     report += `- **Account ID**: ${accountId}\n`;
 
     if (payeeName) {
