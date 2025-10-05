@@ -9,7 +9,7 @@ export class UpdateTransactionInputParser {
     }
 
     const argsObj = args as Record<string, unknown>;
-    const { transactionId, categoryId, payeeId, notes, amount, subtransactions } = argsObj;
+    const { transactionId, date, categoryId, payeeId, notes, amount, cleared, subtransactions } = argsObj;
 
     // Validate required fields
     if (!transactionId || typeof transactionId !== 'string') {
@@ -18,10 +18,12 @@ export class UpdateTransactionInputParser {
 
     return {
       transactionId,
+      date: typeof date === 'string' ? date : undefined,
       categoryId: typeof categoryId === 'string' ? categoryId : undefined,
       payeeId: typeof payeeId === 'string' ? payeeId : undefined,
       notes: typeof notes === 'string' ? notes : undefined,
       amount: typeof amount === 'number' ? amount : undefined,
+      cleared: typeof cleared === 'boolean' ? cleared : undefined,
       subtransactions: Array.isArray(subtransactions)
         ? subtransactions.map((sub) => ({
             amount: typeof sub.amount === 'number' ? sub.amount : 0,

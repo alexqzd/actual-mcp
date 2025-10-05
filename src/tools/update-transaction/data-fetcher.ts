@@ -15,6 +15,10 @@ export class UpdateTransactionDataFetcher {
     // Build update object with only provided fields
     const updateData: Record<string, any> = {};
 
+    if (input.date !== undefined) {
+      updateData.date = input.date;
+    }
+
     if (input.categoryId !== undefined) {
       updateData.category = input.categoryId;
     }
@@ -29,6 +33,10 @@ export class UpdateTransactionDataFetcher {
 
     if (input.amount !== undefined) {
       updateData.amount = convertToCents(input.amount);
+    }
+
+    if (input.cleared !== undefined) {
+      updateData.cleared = input.cleared;
     }
 
     if (input.subtransactions !== undefined) {

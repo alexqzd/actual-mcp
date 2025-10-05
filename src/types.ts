@@ -65,10 +65,12 @@ export type BudgetReviewArgs = z.infer<typeof BudgetReviewArgsSchema>;
 
 export const UpdateTransactionArgsSchema = z.object({
   transactionId: z.string(),
+  date: z.string().optional(),
   categoryId: z.string().optional(),
   payeeId: z.string().optional(),
   notes: z.string().optional(),
   amount: z.number().optional(),
+  cleared: z.boolean().optional(),
   subtransactions: z
     .array(
       z.object({

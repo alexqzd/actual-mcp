@@ -10,7 +10,8 @@ import { UpdateTransactionReportGenerator } from './report-generator.js';
 
 export const schema = {
   name: 'update-transaction',
-  description: 'Update an existing transaction with new category, payee, notes, or amount',
+  description:
+    'Update an existing transaction with new date, category, payee, notes, amount, cleared status, or subtransactions',
   inputSchema: zodToJsonSchema(UpdateTransactionArgsSchema) as ToolInput,
 };
 

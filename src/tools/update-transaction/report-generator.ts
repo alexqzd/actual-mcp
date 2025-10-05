@@ -6,6 +6,10 @@ export class UpdateTransactionReportGenerator {
   generate(input: UpdateTransactionInput): string {
     const updates: string[] = [];
 
+    if (input.date !== undefined) {
+      updates.push(`date`);
+    }
+
     if (input.categoryId !== undefined) {
       updates.push(`category`);
     }
@@ -20,6 +24,10 @@ export class UpdateTransactionReportGenerator {
 
     if (input.amount !== undefined) {
       updates.push(`amount`);
+    }
+
+    if (input.cleared !== undefined) {
+      updates.push(`cleared`);
     }
 
     if (input.subtransactions !== undefined) {
