@@ -15,7 +15,7 @@ export async function handler(args: UpdateTransactionArgs): Promise<CallToolResu
   try {
     await initActualApi();
 
-    const { transactionId, categoryId, payeeId, notes, amount } = args;
+    const { transactionId, categoryId, payeeId, notes, amount, subtransactions } = args;
 
     // Build update object with only provided fields
     const updateData: Record<string, any> = {};
@@ -34,6 +34,18 @@ export async function handler(args: UpdateTransactionArgs): Promise<CallToolResu
 
     if (amount !== undefined) {
       updateData.amount = amount * 100; // Convert to cents
+    }
+
+    if (subtransactions !== undefined) {
+      updateData.subtransactions = subtransactions.map((sub) => ({
+        amount: Math.round(sub.amount * 100), // Convert to cents
+        category: sub.categoryId,
+        notes: sub.notes || '',
+      }));
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return success('No fields to update provided.');
     }
 
     // Update the transaction using the Actual API

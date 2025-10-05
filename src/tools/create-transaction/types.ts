@@ -8,6 +8,11 @@ export interface CreateTransactionInput {
   categoryName?: string;
   notes?: string;
   cleared?: boolean;
+  subtransactions?: Array<{
+    amount: number;
+    categoryName: string;
+    notes?: string;
+  }>;
 }
 
 export interface CreatedTransaction {

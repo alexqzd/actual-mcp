@@ -22,7 +22,8 @@ export class GetTransactionsReportGenerator {
     
     const rows = mappedTransactions
       .map((t) => {
-        const mainRow = `| ${t.id} | ${t.date} | ${t.payee} | ${t.subtransactions ? '(Split)' : t.category} | ${t.amount} | ${t.notes} |`;
+        const isSplit = (t.subtransactions?.length ?? 0) > 0;
+        const mainRow = `| ${t.id} | ${t.date} | ${t.payee} | ${isSplit ? '(Split)' : t.category} | ${t.amount} | ${t.notes} |`;
         const subs =
           t.subtransactions?.map(
             (s) =>

@@ -69,6 +69,11 @@ export const UpdateTransactionArgsSchema = z.object({
   payeeId: z.string().optional(),
   notes: z.string().optional(),
   amount: z.number().optional(),
+  subtransactions: z.array(z.object({
+    amount: z.number(),
+    categoryId: z.string(),
+    notes: z.string().optional(),
+  })).optional(),
 });
 
 export type UpdateTransactionArgs = z.infer<typeof UpdateTransactionArgsSchema>;
@@ -80,6 +85,11 @@ export const CreateTransactionArgsSchema = z.object({
   categoryName: z.string().optional(),
   notes: z.string().optional(),
   cleared: z.boolean().optional(),
+  subtransactions: z.array(z.object({
+    amount: z.number(),
+    categoryName: z.string(),
+    notes: z.string().optional(),
+  })).optional(),
 });
 
 export type CreateTransactionArgs = z.infer<typeof CreateTransactionArgsSchema>;

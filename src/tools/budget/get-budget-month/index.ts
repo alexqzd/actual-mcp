@@ -58,6 +58,7 @@ export async function handler(
         balance: group.balance / 100,
         categories: group.categories?.map((cat: any) => ({
           ...cat,
+          received: cat.received / 100,
           budgeted: cat.budgeted / 100,
           spent: cat.spent / 100,
           balance: cat.balance / 100

@@ -10,6 +10,7 @@ import {
   APIPayeeEntity,
 } from '@actual-app/api/@types/loot-core/src/server/api-models.js';
 import { RuleEntity, TransactionEntity } from '@actual-app/api/@types/loot-core/src/types/models/index.js';
+import ReconcileTransactionsResult from '@actual-app/api/@types/loot-core/src/server/accounts/sync.js';
 
 const DEFAULT_DATA_DIR: string = path.resolve(os.homedir() || '.', '.actual');
 
@@ -243,6 +244,51 @@ export async function addTransactions(
 ): Promise<void> {
   await initActualApi();
   await api.addTransactions(accountId, transactions, options);
+}
+
+/**
+ * Add transactions to an account (ensures API is initialized)
+ */
+export async function importTransactions(
+  accountId: string,
+  transactions: Array<{
+    date: string;
+    amount: number;
+    payee?: string | null;
+    category?: string | null;
+    notes?: string;
+    cleared?: boolean;
+    subtransactions?: Array<{
+      amount: number;
+      category?: string | null;
+      notes?: string;
+    }>;
+  }>
+): Promise<string> {
+  await initActualApi();
+  // Map to the ImportTransactionEntity shape (include required `account` field)
+  const importPayload = transactions.map((t) => ({
+    account: accountId,
+    date: t.date,
+    amount: t.amount,
+    payee: t.payee ?? undefined,
+    category: t.category ?? undefined,
+    notes: t.notes,
+    cleared: t.cleared,
+    subtransactions: t.subtransactions?.map((st) => ({
+      amount: st.amount,
+      category: st.category ?? undefined,
+      notes: st.notes,
+    }))
+  }));
+  const result = await api.importTransactions(accountId, importPayload);
+  let added_id = result.added[0];
+  let updated_id = result.updated[0];
+  // if added is undefined, it means the transaction was already there, use updated instead
+  if (added_id === undefined) {
+    added_id = updated_id;
+  }
+  return added_id;
 }
 
 export async function getBudgetMonths(): Promise<unknown> {

@@ -12,6 +12,7 @@ export class CreateTransactionReportGenerator {
 
     // Transaction details
     report += `## Transaction Details\n\n`;
+    report += `- **Transaction ID**: ${result.transactionId}\n`;
     report += `- **Date**: ${date}\n`;
     report += `- **Amount**: ${formatAmount(amount * 100)}\n`;
     report += `- **Account ID**: ${accountId}\n`;

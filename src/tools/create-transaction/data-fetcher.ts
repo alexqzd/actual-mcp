@@ -9,8 +9,10 @@ import {
   createCategory,
   createCategoryGroup,
   addTransactions,
+  importTransactions,
 } from '../../actual-api.js';
 import type { CreateTransactionInput, EntityCreationResult } from './types.js';
+import api from '@actual-app/api';
 
 export class CreateTransactionDataFetcher {
   /**
@@ -61,12 +63,12 @@ export class CreateTransactionDataFetcher {
 
     // Ensure category exists if provided
     let categoryId: string | undefined;
+    const categories = await getCategories();
     if (!input.categoryName) {
       // No category provided
       categoryId = undefined;
     } else {
       // Try to find existing category
-      const categories = await getCategories();
       let targetCategory = categories.find((c) => c.name.toLowerCase() === input.categoryName!.toLowerCase());
 
       if (!targetCategory) {
@@ -87,14 +89,32 @@ export class CreateTransactionDataFetcher {
       payee: payeeId || null,
       category: categoryId || null,
       notes: input.notes || '',
-      cleared: input.cleared || true,
+      cleared: input.cleared === undefined ? false : input.cleared,
+      subtransactions: input.subtransactions ? input.subtransactions.map((sub) => ({
+        amount: Math.round(sub.amount * 100),
+        category: categories.find((c) => c.name.toLowerCase() === sub.categoryName.toLowerCase())?.id,
+        notes: sub.notes || '',
+      })) : undefined,
     };
 
     // Add the transaction
-    await addTransactions(input.accountId, [transaction], { learnCategories: true, runTransfers: true });
+    // await addTransactions(input.accountId, [transaction], { learnCategories: true, runTransfers: true });
+    let transactionID = await importTransactions(input.accountId, [transaction]);
+
+    // if a payee was provided, Actual will try to guess the category and ignore the one provided
+    // so we need to call the updateTransaction endpoint to set the correct category
+    // but only if a category was provided
+    if (input.categoryName && payeeId) {
+      await api.updateTransaction(transactionID, { category: categoryId });
+    }
+
+    // Actual clears transactions by default, so if the user specified cleared: false, we need to update it
+    if (input.cleared === false) {
+      await api.updateTransaction(transactionID, { cleared: false });
+    }
 
     return {
-      transactionId: 'created', // The API doesn't return the created transaction ID directly
+      transactionId: transactionID,
       payeeId,
       categoryId,
       createdPayee,
