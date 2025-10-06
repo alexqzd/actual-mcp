@@ -3,8 +3,10 @@
 import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { CreateTransactionInputParser } from './input-parser.js';
 import { CreateTransactionDataFetcher } from './data-fetcher.js';
-import { CreateTransactionReportGenerator } from './report-generator.js';
-import { success, errorFromCatch } from '../../utils/response.js';
+import { errorFromCatch } from '../../utils/response.js';
+import { buildMutationResponse } from '../../utils/report-builder.js';
+import { formatAmount } from '../../utils.js';
+import { convertToCents } from '../../core/transactions/index.js';
 import { CreateTransactionArgsSchema, type CreateTransactionArgs, ToolInput } from '../../types.js';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
@@ -25,10 +27,35 @@ export async function handler(args: CreateTransactionArgs): Promise<CallToolResu
     // Create transaction and any necessary entities
     const result = await new CreateTransactionDataFetcher().createTransaction(input);
 
-    // Generate formatted report
-    const markdown = new CreateTransactionReportGenerator().generate(input, result);
+    // Build structured mutation response
+    const newValues: Record<string, unknown> = {
+      transactionId: result.transactionId,
+      date: input.date,
+      amount: formatAmount(convertToCents(input.amount)),
+      accountId: input.accountId,
+      status: input.cleared ? 'Cleared' : 'Pending',
+    };
 
-    return success(markdown);
+    if (input.payeeId) {
+      newValues.payeeId = input.payeeId;
+    }
+    if (input.categoryId) {
+      newValues.categoryId = input.categoryId;
+    }
+    if (input.notes) {
+      newValues.notes = input.notes;
+    }
+
+    return buildMutationResponse({
+      operation: 'create',
+      resourceType: 'transaction',
+      resourceIds: result.transactionId,
+      metadata: {
+        changes: {
+          newValues,
+        },
+      },
+    });
   } catch (err) {
     return errorFromCatch(err);
   }

@@ -3,12 +3,13 @@
 // ----------------------------
 
 import { getBudgetMonth } from '../../../actual-api.js';
-import { successWithJson, errorFromCatch } from '../../../utils/response.js';
-import { formatAmount } from '../../../utils.js';
+import { errorFromCatch } from '../../../utils/response.js';
+import { buildQueryResponse } from '../../../utils/report-builder.js';
 
 export const schema = {
   name: 'get-budget-month',
-  description: 'Get detailed budget data for a specific month including category budgets, spending, balances, income, and rollover amounts.',
+  description:
+    'Get detailed budget data for a specific month including category budgets, spending, balances, income, and rollover amounts.',
   inputSchema: {
     type: 'object',
     properties: {
@@ -29,7 +30,7 @@ export const schema = {
 
 export async function handler(
   args: Record<string, unknown>
-): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
+): Promise<ReturnType<typeof buildQueryResponse> | ReturnType<typeof errorFromCatch>> {
   try {
     const { year, month } = args;
     if (typeof year !== 'number' || typeof month !== 'number') {
@@ -65,7 +66,14 @@ export async function handler(
         })),
       })),
     };
-    return successWithJson(budgetMonth);
+
+    return buildQueryResponse({
+      resourceType: 'budget-month',
+      data: budgetMonth,
+      metadata: {
+        count: 1,
+      },
+    });
   } catch (err) {
     return errorFromCatch(err);
   }

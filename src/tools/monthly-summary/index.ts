@@ -7,13 +7,15 @@ import { MonthlySummaryTransactionAggregator } from './transaction-aggregator.js
 import { MonthlySummaryCalculator } from './summary-calculator.js';
 import { MonthlySummaryReportDataBuilder } from './report-data-builder.js';
 import { MonthlySummaryReportGenerator } from './report-generator.js';
-import { successWithContent, errorFromCatch } from '../../utils/response.js';
+import { errorFromCatch } from '../../utils/response.js';
+import { buildReportResponse, createReportSection } from '../../utils/report-builder.js';
 import { getDateRangeForMonths } from '../../utils.js';
 import { MonthlySummaryArgsSchema, type MonthlySummaryArgs, ToolInput } from '../../types.js';
 
 export const schema = {
   name: 'monthly-summary',
-  description: 'Get monthly income, expenses, and savings. Optionally filter by account ID (use get-accounts to find account IDs).',
+  description:
+    'Get monthly income, expenses, and savings. Optionally filter by account ID (use get-accounts to find account IDs).',
   inputSchema: zodToJsonSchema(MonthlySummaryArgsSchema) as ToolInput,
 };
 
@@ -46,10 +48,24 @@ export async function handler(args: MonthlySummaryArgs): Promise<CallToolResult>
     );
     const markdown = new MonthlySummaryReportGenerator().generate(reportData);
 
-    return successWithContent({ type: 'text', text: markdown });
+    // Build structured report response
+    const accountName = reportData.accountName || 'All on-budget accounts';
+    return buildReportResponse({
+      operation: 'analyze',
+      resourceType: 'monthly-summary',
+      summary: `Monthly financial summary for ${accountName} from ${start} to ${end}`,
+      sections: [createReportSection('Monthly Summary', markdown, sortedMonths)],
+      data: {
+        months: sortedMonths,
+        averages: averages,
+      },
+      metadata: {
+        period: { start, end },
+        accountId: input.accountId,
+        accountName: accountName,
+      },
+    });
   } catch (err) {
-    // Use the standardized error response
-    // errorFromCatch is imported from ../../utils/response.js
     return errorFromCatch(err);
   }
 }

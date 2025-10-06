@@ -176,9 +176,7 @@ describe('UpdateTransactionDataFetcher', () => {
         subtransactions: [],
       };
 
-      await expect(fetcher.updateTransaction(input)).rejects.toThrow(
-        'Cannot set subtransactions to an empty array'
-      );
+      await expect(fetcher.updateTransaction(input)).rejects.toThrow('Cannot set subtransactions to an empty array');
 
       expect(mockUpdateTransaction).not.toHaveBeenCalled();
     });

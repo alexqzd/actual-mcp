@@ -4,7 +4,8 @@ import { BalanceHistoryInputParser } from './input-parser.js';
 import { BalanceHistoryDataFetcher } from './data-fetcher.js';
 import { BalanceHistoryCalculator } from './balance-calculator.js';
 import { BalanceHistoryReportGenerator } from './report-generator.js';
-import { success, errorFromCatch } from '../../utils/response.js';
+import { errorFromCatch } from '../../utils/response.js';
+import { buildReportResponse, createReportSection } from '../../utils/report-builder.js';
 import { formatDate } from '../../utils.js';
 import { BalanceHistoryArgsSchema, type BalanceHistoryArgs, ToolInput } from '../../types.js';
 import { zodToJsonSchema } from 'zod-to-json-schema';
@@ -33,9 +34,23 @@ export async function handler(args: BalanceHistoryArgs): Promise<CallToolResult>
     // Calculate balance history
     const sortedMonths = new BalanceHistoryCalculator().calculate(account, accounts, transactions, months, endDate);
 
-    // Generate report
+    // Generate report markdown
     const markdown = new BalanceHistoryReportGenerator().generate(account, { start, end }, sortedMonths);
-    return success(markdown);
+
+    // Build structured report response
+    const accountName = account ? account.name : 'All accounts';
+    return buildReportResponse({
+      operation: 'report',
+      resourceType: 'balance-history',
+      summary: `Balance history for ${accountName} from ${start} to ${end}`,
+      sections: [createReportSection('Balance History', markdown, { monthCount: sortedMonths.length })],
+      data: sortedMonths,
+      metadata: {
+        period: { start, end },
+        accountId: accountId,
+        accountName: accountName,
+      },
+    });
   } catch (err) {
     return errorFromCatch(err);
   }

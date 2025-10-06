@@ -264,6 +264,86 @@ npx @modelcontextprotocol/inspector node build/index.js
 - `types.ts` - Type definitions for API responses and parameters
 - `prompts.ts` - Prompt templates for LLM interactions
 - `utils.ts` - Helper functions for date formatting and more
+- `src/core/` - Core functionality (data fetching, mapping, aggregation)
+- `src/tools/` - Tool implementations organized by feature
+- `src/utils/` - Shared utilities and response builders
+
+### Standard Response Format
+
+All tools in this MCP server return responses in a consistent, structured JSON format designed for easy parsing by LLMs and client applications. The response format varies based on the operation type:
+
+#### Query Responses
+
+Tools that retrieve data (e.g., `get-accounts`, `get-payees`, `get-grouped-categories`) return:
+
+```json
+{
+  "operation": "query",
+  "resourceType": "account",
+  "summary": "Retrieved 5 accounts",
+  "data": [...],
+  "metadata": {
+    "count": 5,
+    "filters": {...},
+    "period": { "start": "2024-01", "end": "2024-12" }
+  }
+}
+```
+
+#### Mutation Responses
+
+Tools that create, update, or delete data return:
+
+```json
+{
+  "operation": "create",
+  "resourceType": "category",
+  "summary": "Created 1 category (ID: cat-123)",
+  "affected": {
+    "ids": ["cat-123"],
+    "count": 1
+  },
+  "metadata": {
+    "warnings": [...],
+    "changes": {
+      "updatedFields": ["name", "amount"],
+      "newValues": {...}
+    }
+  }
+}
+```
+
+#### Report Responses
+
+Tools that generate reports and analysis (e.g., `balance-history`, `monthly-summary`, `spending-by-category`) return:
+
+```json
+{
+  "operation": "report",
+  "resourceType": "balance-history",
+  "summary": "Balance history for Checking from 2024-01 to 2024-12",
+  "sections": [
+    {
+      "title": "Balance History",
+      "content": "# Markdown formatted report...",
+      "data": {...}
+    }
+  ],
+  "data": [...],
+  "metadata": {
+    "period": { "start": "2024-01", "end": "2024-12" },
+    "accountId": "acc-123",
+    "accountName": "Checking"
+  }
+}
+```
+
+This standardized format ensures:
+- **Consistency** across all tools
+- **Easy parsing** by LLMs and applications
+- **Rich metadata** for context and filtering
+- **Structured data** alongside human-readable reports
+- **Clear operation tracking** for debugging and logging
 
 ## License
 

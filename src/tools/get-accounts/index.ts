@@ -2,7 +2,8 @@
 // GET ACCOUNTS TOOL
 // ----------------------------
 
-import { successWithJson, errorFromCatch } from '../../utils/response.js';
+import { errorFromCatch } from '../../utils/response.js';
+import { buildQueryResponse } from '../../utils/report-builder.js';
 import { fetchAllAccounts } from '../../core/data/fetch-accounts.js';
 import type { Account } from '../../core/types/domain.js';
 import { getAccountBalance } from '@actual-app/api';
@@ -20,7 +21,7 @@ export const schema = {
   inputSchema: zodToJsonSchema(GetAccountsArgsSchema) as ToolInput,
 };
 
-export async function handler(): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
+export async function handler(): Promise<ReturnType<typeof buildQueryResponse> | ReturnType<typeof errorFromCatch>> {
   try {
     const accounts: Account[] = await fetchAllAccounts();
 
@@ -37,7 +38,13 @@ export async function handler(): Promise<ReturnType<typeof successWithJson> | Re
       offBudget: account.offbudget,
     }));
 
-    return successWithJson(structured);
+    return buildQueryResponse({
+      resourceType: 'account',
+      data: structured,
+      metadata: {
+        count: structured.length,
+      },
+    });
   } catch (err) {
     return errorFromCatch(err);
   }

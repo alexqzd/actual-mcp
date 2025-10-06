@@ -2,7 +2,8 @@
 // CREATE PAYEE TOOL
 // ----------------------------
 
-import { successWithJson, errorFromCatch } from '../../../utils/response.js';
+import { errorFromCatch } from '../../../utils/response.js';
+import { buildMutationResponse } from '../../../utils/report-builder.js';
 import { createPayee } from '../../../actual-api.js';
 
 export const schema = {
@@ -26,7 +27,7 @@ export const schema = {
 
 export async function handler(
   args: Record<string, unknown>
-): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
+): Promise<ReturnType<typeof buildMutationResponse> | ReturnType<typeof errorFromCatch>> {
   try {
     if (!args.name || typeof args.name !== 'string') {
       return errorFromCatch('name is required and must be a string');
@@ -39,7 +40,11 @@ export async function handler(
 
     const id: string = await createPayee(data);
 
-    return successWithJson('Successfully created payee ' + id);
+    return buildMutationResponse({
+      operation: 'create',
+      resourceType: 'payee',
+      resourceIds: id,
+    });
   } catch (err) {
     return errorFromCatch(err);
   }

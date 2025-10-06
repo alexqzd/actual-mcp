@@ -2,7 +2,8 @@
 // GET PAYEES TOOL
 // ----------------------------
 
-import { successWithJson, errorFromCatch } from '../../../utils/response.js';
+import { errorFromCatch } from '../../../utils/response.js';
+import { buildQueryResponse } from '../../../utils/report-builder.js';
 import { fetchAllPayees } from '../../../core/data/fetch-payees.js';
 import type { Payee } from '../../../types.js';
 
@@ -17,7 +18,7 @@ export const schema = {
   },
 };
 
-export async function handler(): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
+export async function handler(): Promise<ReturnType<typeof buildQueryResponse> | ReturnType<typeof errorFromCatch>> {
   try {
     const categories: Payee[] = await fetchAllPayees();
 
@@ -27,7 +28,13 @@ export async function handler(): Promise<ReturnType<typeof successWithJson> | Re
       transfer_acct: payee.transfer_acct || '(not a transfer payee)',
     }));
 
-    return successWithJson(structured);
+    return buildQueryResponse({
+      resourceType: 'payee',
+      data: structured,
+      metadata: {
+        count: structured.length,
+      },
+    });
   } catch (err) {
     return errorFromCatch(err);
   }

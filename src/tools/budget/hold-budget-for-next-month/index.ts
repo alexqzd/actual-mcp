@@ -3,7 +3,8 @@
 // ----------------------------
 
 import { holdBudgetForNextMonth } from '../../../actual-api.js';
-import { successWithJson, errorFromCatch } from '../../../utils/response.js';
+import { errorFromCatch } from '../../../utils/response.js';
+import { buildMutationResponse } from '../../../utils/report-builder.js';
 import { formatAmount } from '../../../utils.js';
 
 export const schema = {
@@ -28,7 +29,7 @@ export const schema = {
 
 export async function handler(
   args: Record<string, unknown>
-): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
+): Promise<ReturnType<typeof buildMutationResponse> | ReturnType<typeof errorFromCatch>> {
   try {
     const { month, amount } = args;
     if (typeof month !== 'string' || typeof amount !== 'number') {
@@ -38,8 +39,12 @@ export async function handler(
     // Convert from dollars to cents for the API
     const amountInCents = Math.round(amount * 100);
     await holdBudgetForNextMonth(month, amountInCents);
-    const formattedAmount = formatAmount(amountInCents);
-    return successWithJson(`Successfully held ${formattedAmount} from ${month} budget for next month`);
+
+    return buildMutationResponse({
+      operation: 'update',
+      resourceType: 'budget',
+      resourceIds: month,
+    });
   } catch (err) {
     return errorFromCatch(err);
   }

@@ -2,7 +2,8 @@
 // GET RULES TOOL
 // ----------------------------
 
-import { successWithJson, errorFromCatch } from '../../../utils/response.js';
+import { errorFromCatch } from '../../../utils/response.js';
+import { buildQueryResponse } from '../../../utils/report-builder.js';
 // import type { Rule } from '../../../types.js';
 import { fetchAllRules } from '../../../core/data/fetch-rules.js';
 import { RuleEntity } from '@actual-app/api/@types/loot-core/src/types/models/rule.js';
@@ -18,11 +19,17 @@ export const schema = {
   },
 };
 
-export async function handler(): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
+export async function handler(): Promise<ReturnType<typeof buildQueryResponse> | ReturnType<typeof errorFromCatch>> {
   try {
     const rules: RuleEntity[] = await fetchAllRules();
 
-    return successWithJson(rules);
+    return buildQueryResponse({
+      resourceType: 'rule',
+      data: rules,
+      metadata: {
+        count: rules.length,
+      },
+    });
   } catch (err) {
     return errorFromCatch(err);
   }

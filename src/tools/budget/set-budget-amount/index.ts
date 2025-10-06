@@ -3,7 +3,8 @@
 // ----------------------------
 
 import { setBudgetAmount } from '../../../actual-api.js';
-import { successWithJson, errorFromCatch } from '../../../utils/response.js';
+import { errorFromCatch } from '../../../utils/response.js';
+import { buildMutationResponse } from '../../../utils/report-builder.js';
 import { formatAmount } from '../../../utils.js';
 
 export const schema = {
@@ -32,7 +33,7 @@ export const schema = {
 
 export async function handler(
   args: Record<string, unknown>
-): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
+): Promise<ReturnType<typeof buildMutationResponse> | ReturnType<typeof errorFromCatch>> {
   try {
     const { month, categoryId, amount } = args;
     if (typeof month !== 'string' || typeof categoryId !== 'string' || typeof amount !== 'number') {
@@ -44,10 +45,12 @@ export async function handler(
     // Convert from dollars to cents for the API
     const amountInCents = Math.round(amount * 100);
     await setBudgetAmount(month, categoryId, amountInCents);
-    const formattedAmount = formatAmount(amountInCents);
-    return successWithJson(
-      `Successfully set budget amount for category ${categoryId} in month ${month} to ${formattedAmount}`
-    );
+
+    return buildMutationResponse({
+      operation: 'update',
+      resourceType: 'budget',
+      resourceIds: `${month}-${categoryId}`,
+    });
   } catch (err) {
     return errorFromCatch(err);
   }

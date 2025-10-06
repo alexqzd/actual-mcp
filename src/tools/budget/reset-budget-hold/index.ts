@@ -3,7 +3,8 @@
 // ----------------------------
 
 import { resetBudgetHold } from '../../../actual-api.js';
-import { successWithJson, errorFromCatch } from '../../../utils/response.js';
+import { errorFromCatch } from '../../../utils/response.js';
+import { buildMutationResponse } from '../../../utils/report-builder.js';
 
 export const schema = {
   name: 'reset-budget-hold',
@@ -23,7 +24,7 @@ export const schema = {
 
 export async function handler(
   args: Record<string, unknown>
-): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
+): Promise<ReturnType<typeof buildMutationResponse> | ReturnType<typeof errorFromCatch>> {
   try {
     const { month } = args;
     if (typeof month !== 'string') {
@@ -31,7 +32,12 @@ export async function handler(
     }
 
     await resetBudgetHold(month);
-    return successWithJson(`Successfully reset budget hold for ${month}`);
+
+    return buildMutationResponse({
+      operation: 'update',
+      resourceType: 'budget',
+      resourceIds: month,
+    });
   } catch (err) {
     return errorFromCatch(err);
   }

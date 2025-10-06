@@ -2,7 +2,8 @@
 // GET GROUPED CATEGORY TOOL
 // ----------------------------
 
-import { successWithJson, errorFromCatch } from '../../../utils/response.js';
+import { errorFromCatch } from '../../../utils/response.js';
+import { buildQueryResponse } from '../../../utils/report-builder.js';
 import { fetchAllCategoryGroups } from '../../../core/data/fetch-categories.js';
 import type { CategoryGroup } from '../../../core/types/domain.js';
 
@@ -17,11 +18,17 @@ export const schema = {
   },
 };
 
-export async function handler(): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
+export async function handler(): Promise<ReturnType<typeof buildQueryResponse> | ReturnType<typeof errorFromCatch>> {
   try {
     const categoryGroups: CategoryGroup[] = await fetchAllCategoryGroups();
 
-    return successWithJson(categoryGroups);
+    return buildQueryResponse({
+      resourceType: 'category-group',
+      data: categoryGroups,
+      metadata: {
+        count: categoryGroups.length,
+      },
+    });
   } catch (err) {
     return errorFromCatch(err);
   }

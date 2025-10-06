@@ -3,7 +3,8 @@
 // ----------------------------
 
 import { setBudgetCarryover } from '../../../actual-api.js';
-import { successWithJson, errorFromCatch } from '../../../utils/response.js';
+import { errorFromCatch } from '../../../utils/response.js';
+import { buildMutationResponse } from '../../../utils/report-builder.js';
 
 export const schema = {
   name: 'set-budget-carryover',
@@ -31,7 +32,7 @@ export const schema = {
 
 export async function handler(
   args: Record<string, unknown>
-): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
+): Promise<ReturnType<typeof buildMutationResponse> | ReturnType<typeof errorFromCatch>> {
   try {
     const { month, categoryId, carryover } = args;
     if (typeof month !== 'string' || typeof categoryId !== 'string' || typeof carryover !== 'boolean') {
@@ -41,9 +42,12 @@ export async function handler(
     }
 
     await setBudgetCarryover(month, categoryId, carryover);
-    return successWithJson(
-      `Successfully ${carryover ? 'enabled' : 'disabled'} budget carryover for category ${categoryId} in month ${month}`
-    );
+
+    return buildMutationResponse({
+      operation: 'update',
+      resourceType: 'budget',
+      resourceIds: `${month}-${categoryId}`,
+    });
   } catch (err) {
     return errorFromCatch(err);
   }

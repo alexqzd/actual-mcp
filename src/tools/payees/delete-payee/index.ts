@@ -3,7 +3,8 @@
 // ----------------------------
 
 import { deletePayee } from '../../../actual-api.js';
-import { successWithJson, errorFromCatch } from '../../../utils/response.js';
+import { errorFromCatch } from '../../../utils/response.js';
+import { buildMutationResponse } from '../../../utils/report-builder.js';
 
 export const schema = {
   name: 'delete-payee',
@@ -22,7 +23,7 @@ export const schema = {
 
 export async function handler(
   args: Record<string, unknown>
-): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
+): Promise<ReturnType<typeof buildMutationResponse> | ReturnType<typeof errorFromCatch>> {
   try {
     if (!args.id || typeof args.id !== 'string') {
       return errorFromCatch('id is required and must be a string');
@@ -30,7 +31,11 @@ export async function handler(
 
     await deletePayee(args.id);
 
-    return successWithJson('Successfully deleted payee ' + args.id);
+    return buildMutationResponse({
+      operation: 'delete',
+      resourceType: 'payee',
+      resourceIds: args.id,
+    });
   } catch (err) {
     return errorFromCatch(err);
   }

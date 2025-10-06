@@ -6,7 +6,8 @@ import { CategoryMapper } from '../../core/mapping/category-mapper.js';
 import { TransactionGrouper } from '../../core/aggregation/transaction-grouper.js';
 import { GroupAggregator } from '../../core/aggregation/group-by.js';
 import { SpendingByCategoryReportGenerator } from './report-generator.js';
-import { success, errorFromCatch } from '../../utils/response.js';
+import { errorFromCatch } from '../../utils/response.js';
+import { buildReportResponse, createReportSection } from '../../utils/report-builder.js';
 import type { SpendingByCategoryInput } from './input-parser.js';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import { SpendingByCategoryArgsSchema, type SpendingByCategoryArgs, ToolInput, type Account } from '../../types.js';
@@ -36,19 +37,33 @@ export async function handler(args: SpendingByCategoryArgs): Promise<CallToolRes
     );
     const sortedGroups = new GroupAggregator().aggregateAndSort(spendingByCategory);
 
-    let accountLabel = 'Accounts: All on-budget accounts';
+    let accountName = 'All on-budget accounts';
     if (accountId) {
       const account: Account | undefined = accounts.find((a) => a.id === accountId);
-      accountLabel = `Account: ${account ? account.name : accountId}`;
+      accountName = account ? account.name : accountId;
     }
 
     const markdown = new SpendingByCategoryReportGenerator().generate(
       sortedGroups,
       { start: startDate, end: endDate },
-      accountLabel,
+      `Account: ${accountName}`,
       includeIncome
     );
-    return success(markdown);
+
+    // Build structured report response
+    return buildReportResponse({
+      operation: 'report',
+      resourceType: 'spending-by-category',
+      summary: `Spending by category for ${accountName} from ${startDate} to ${endDate}`,
+      sections: [createReportSection('Spending by Category', markdown, sortedGroups)],
+      data: sortedGroups,
+      metadata: {
+        period: { start: startDate, end: endDate },
+        accountId: accountId,
+        accountName: accountName,
+        filters: { includeIncome },
+      },
+    });
   } catch (err) {
     return errorFromCatch(err);
   }
