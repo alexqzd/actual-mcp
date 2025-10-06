@@ -7,7 +7,7 @@ import { successWithJson, errorFromCatch } from '../../../utils/response.js';
 
 export const schema = {
   name: 'get-budget-months',
-  description: 'Get a list of all available budget months',
+  description: 'Get a list of all available budget months. Use this to find which months have budget data before querying specific month details.',
   inputSchema: {
     type: 'object',
     description: 'This tool does not accept any arguments.',

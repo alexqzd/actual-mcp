@@ -8,7 +8,7 @@ import { formatAmount } from '../../../utils.js';
 
 export const schema = {
   name: 'get-budget-month',
-  description: 'Get budget information for a specific month',
+  description: 'Get detailed budget data for a specific month including category budgets, spending, balances, income, and rollover amounts.',
   inputSchema: {
     type: 'object',
     properties: {
