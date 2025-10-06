@@ -6,8 +6,8 @@ export interface GetTransactionsInput {
   endDate?: string;
   minAmount?: number;
   maxAmount?: number;
-  category?: string;
-  payee?: string;
+  categoryId?: string;
+  payeeId?: string;
   limit?: number;
 }
 
@@ -17,7 +17,7 @@ export class GetTransactionsInputParser {
       throw new Error('Arguments must be an object');
     }
     const argsObj = args as Record<string, unknown>;
-    const { accountId, startDate, endDate, minAmount, maxAmount, category, payee, limit } = argsObj;
+    const { accountId, startDate, endDate, minAmount, maxAmount, categoryId, payeeId, limit } = argsObj;
     if (!accountId || typeof accountId !== 'string') {
       throw new Error('accountId is required and must be a string');
     }
@@ -27,8 +27,8 @@ export class GetTransactionsInputParser {
       endDate: typeof endDate === 'string' ? endDate : undefined,
       minAmount: typeof minAmount === 'number' ? minAmount : undefined,
       maxAmount: typeof maxAmount === 'number' ? maxAmount : undefined,
-      category: typeof category === 'string' ? category : undefined,
-      payee: typeof payee === 'string' ? payee : undefined,
+      categoryId: typeof categoryId === 'string' ? categoryId : undefined,
+      payeeId: typeof payeeId === 'string' ? payeeId : undefined,
       limit: typeof limit === 'number' ? limit : undefined,
     };
   }

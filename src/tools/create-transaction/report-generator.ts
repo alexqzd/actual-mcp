@@ -6,8 +6,7 @@ import type { CreateTransactionInput, EntityCreationResult } from './types.js';
 
 export class CreateTransactionReportGenerator {
   generate(input: CreateTransactionInput, result: EntityCreationResult & { transactionId: string }): string {
-    const { accountId, date, amount, payeeName, categoryName, notes, cleared } = input;
-    const { createdPayee } = result;
+    const { accountId, date, amount, payeeId, categoryId, notes, cleared } = input;
 
     let report = `# Transaction Created Successfully\n\n`;
 
@@ -18,17 +17,12 @@ export class CreateTransactionReportGenerator {
     report += `- **Amount**: ${formatAmount(convertToCents(amount))}\n`;
     report += `- **Account ID**: ${accountId}\n`;
 
-    if (payeeName) {
-      report += `- **Payee**: ${payeeName}`;
-      if (createdPayee) {
-        report += ` *(newly created)*`;
-      }
-      report += `\n`;
+    if (payeeId) {
+      report += `- **Payee ID**: ${payeeId}\n`;
     }
 
-    if (categoryName) {
-      report += `- **Category**: ${categoryName}`;
-      report += `\n`;
+    if (categoryId) {
+      report += `- **Category ID**: ${categoryId}\n`;
     }
 
     if (notes) {
@@ -36,17 +30,6 @@ export class CreateTransactionReportGenerator {
     }
 
     report += `- **Status**: ${cleared ? 'Cleared' : 'Pending'}\n\n`;
-
-    // Creation summary
-    if (createdPayee) {
-      report += `## Entities Created\n\n`;
-
-      if (createdPayee && payeeName) {
-        report += `- ✓ Created new payee: **${payeeName}**\n`;
-      }
-
-      report += `\n`;
-    }
 
     report += `The transaction has been successfully added to your budget.`;
 

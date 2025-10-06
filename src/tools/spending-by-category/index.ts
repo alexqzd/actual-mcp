@@ -13,7 +13,8 @@ import { SpendingByCategoryArgsSchema, type SpendingByCategoryArgs, ToolInput, t
 
 export const schema = {
   name: 'spending-by-category',
-  description: 'Get spending breakdown by category for a specified date range',
+  description:
+    'Get spending breakdown by category for a specified date range. Optionally filter by account ID (use get-accounts to find account IDs).',
   inputSchema: zodToJsonSchema(SpendingByCategoryArgsSchema) as ToolInput,
 };
 

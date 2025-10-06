@@ -32,54 +32,29 @@ describe('CreateTransactionReportGenerator', () => {
       expect(report).toContain('- **Account ID**: account-123');
     });
 
-    it('should generate report for complete transaction with existing entities', () => {
+    it('should generate report for complete transaction with IDs', () => {
       const input: CreateTransactionInput = {
         accountId: 'account-123',
         date: '2023-12-15',
         amount: 25.5,
-        payeeName: 'Grocery Store',
-        categoryName: 'Food',
+        payeeId: 'payee-456',
+        categoryId: 'cat-789',
         notes: 'Weekly groceries',
         cleared: true,
       };
 
       const result: EntityCreationResult & { transactionId: string } = {
         transactionId: 'txn-123',
-        payeeId: 'payee-1',
-        categoryId: 'cat-1',
-        createdPayee: false,
+        payeeId: 'payee-456',
+        categoryId: 'cat-789',
       };
 
       const report = generator.generate(input, result);
 
-      expect(report).toContain('- **Payee**: Grocery Store');
-      expect(report).not.toContain('*(newly created)*');
-      expect(report).toContain('- **Category**: Food');
+      expect(report).toContain('- **Payee ID**: payee-456');
+      expect(report).toContain('- **Category ID**: cat-789');
       expect(report).toContain('- **Notes**: Weekly groceries');
       expect(report).toContain('- **Status**: Cleared');
-    });
-  });
-
-  describe('generate - entity creation', () => {
-    it('should show entity creation when new payee is created', () => {
-      const input: CreateTransactionInput = {
-        accountId: 'account-123',
-        date: '2023-12-15',
-        amount: 25.5,
-        payeeName: 'New Restaurant',
-      };
-
-      const result: EntityCreationResult & { transactionId: string } = {
-        transactionId: 'txn-123',
-        payeeId: 'payee-new',
-        createdPayee: true,
-      };
-
-      const report = generator.generate(input, result);
-
-      expect(report).toContain('- **Payee**: New Restaurant *(newly created)*');
-      expect(report).toContain('## Entities Created');
-      expect(report).toContain('- ✓ Created new payee: **New Restaurant**');
     });
   });
 

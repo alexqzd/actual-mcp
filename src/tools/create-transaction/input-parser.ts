@@ -9,7 +9,7 @@ export class CreateTransactionInputParser {
     }
 
     const argsObj = args as Record<string, unknown>;
-    const { accountId, date, amount, payeeName, categoryName, notes, cleared, subtransactions } = argsObj;
+    const { accountId, date, amount, payeeId, categoryId, notes, cleared, subtransactions } = argsObj;
 
     // Validate required fields
     if (!accountId || typeof accountId !== 'string') {
@@ -34,14 +34,14 @@ export class CreateTransactionInputParser {
       accountId,
       date,
       amount,
-      payeeName: typeof payeeName === 'string' ? payeeName : undefined,
-      categoryName: typeof categoryName === 'string' ? categoryName : undefined,
+      payeeId: typeof payeeId === 'string' ? payeeId : undefined,
+      categoryId: typeof categoryId === 'string' ? categoryId : undefined,
       notes: typeof notes === 'string' ? notes : undefined,
       cleared: typeof cleared === 'boolean' ? cleared : false, // Default to not cleared
       subtransactions: Array.isArray(subtransactions)
         ? subtransactions.map((sub) => ({
             amount: typeof sub.amount === 'number' ? sub.amount : 0,
-            categoryName: typeof sub.categoryName === 'string' ? sub.categoryName : '',
+            categoryId: typeof sub.categoryId === 'string' ? sub.categoryId : '',
             notes: typeof sub.notes === 'string' ? sub.notes : undefined,
           }))
         : undefined,

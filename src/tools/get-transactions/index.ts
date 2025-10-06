@@ -11,14 +11,16 @@ import { zodToJsonSchema } from 'zod-to-json-schema';
 
 export const schema = {
   name: 'get-transactions',
-  description: 'Get transactions for an account with optional filtering',
+  description:
+    'Get transactions for an account with optional filtering by IDs. ' +
+    'IMPORTANT: Filters use IDs, not names. Use get-grouped-categories to find category IDs and get-payees to find payee IDs.',
   inputSchema: zodToJsonSchema(GetTransactionsArgsSchema) as ToolInput,
 };
 
 export async function handler(args: GetTransactionsArgs): Promise<CallToolResult> {
   try {
     const input = new GetTransactionsInputParser().parse(args);
-    const { accountId, startDate, endDate, minAmount, maxAmount, category, payee, limit } = input;
+    const { accountId, startDate, endDate, minAmount, maxAmount, categoryId, payeeId, limit } = input;
     const { startDate: start, endDate: end } = getDateRange(startDate, endDate);
 
     // Fetch transactions
@@ -31,13 +33,11 @@ export async function handler(args: GetTransactionsArgs): Promise<CallToolResult
     if (maxAmount !== undefined) {
       filtered = filtered.filter((t) => t.amount <= maxAmount * 100);
     }
-    if (category) {
-      const lowerCategory = category.toLowerCase();
-      filtered = filtered.filter((t) => (t.category_name || '').toLowerCase().includes(lowerCategory));
+    if (categoryId) {
+      filtered = filtered.filter((t) => t.category === categoryId);
     }
-    if (payee) {
-      const lowerPayee = payee.toLowerCase();
-      filtered = filtered.filter((t) => (t.payee_name || '').toLowerCase().includes(lowerPayee));
+    if (payeeId) {
+      filtered = filtered.filter((t) => t.payee === payeeId);
     }
     if (limit && filtered.length > limit) {
       filtered = filtered.slice(0, limit);
@@ -51,8 +51,8 @@ export async function handler(args: GetTransactionsArgs): Promise<CallToolResult
       startDate || endDate ? `Date range: ${startDate} to ${endDate}` : null,
       minAmount !== undefined ? `Min amount: $${minAmount.toFixed(2)}` : null,
       maxAmount !== undefined ? `Max amount: $${maxAmount.toFixed(2)}` : null,
-      category ? `Category: ${category}` : null,
-      payee ? `Payee: ${payee}` : null,
+      categoryId ? `Category ID: ${categoryId}` : null,
+      payeeId ? `Payee ID: ${payeeId}` : null,
     ]
       .filter(Boolean)
       .join(', ');

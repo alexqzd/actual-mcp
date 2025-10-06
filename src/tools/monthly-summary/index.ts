@@ -13,7 +13,7 @@ import { MonthlySummaryArgsSchema, type MonthlySummaryArgs, ToolInput } from '..
 
 export const schema = {
   name: 'monthly-summary',
-  description: 'Get monthly income, expenses, and savings',
+  description: 'Get monthly income, expenses, and savings. Optionally filter by account ID (use get-accounts to find account IDs).',
   inputSchema: zodToJsonSchema(MonthlySummaryArgsSchema) as ToolInput,
 };
 

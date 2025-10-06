@@ -4,13 +4,13 @@ export interface CreateTransactionInput {
   accountId: string;
   date: string;
   amount: number;
-  payeeName?: string;
-  categoryName?: string;
+  payeeId?: string;
+  categoryId?: string;
   notes?: string;
   cleared?: boolean;
   subtransactions?: Array<{
     amount: number;
-    categoryName: string;
+    categoryId: string;
     notes?: string;
   }>;
 }
@@ -31,6 +31,4 @@ export interface CreatedTransaction {
 export interface EntityCreationResult {
   payeeId?: string;
   categoryId?: string;
-  createdPayee?: boolean;
-  createdCategory?: boolean;
 }

@@ -5,9 +5,11 @@ import type { Account } from '../types/domain.js';
 // CRITICAL: Mock before imports
 vi.mock('../../actual-api.js', () => ({
   getTransactions: vi.fn(),
+  getCategories: vi.fn(),
+  getPayees: vi.fn(),
 }));
 
-import { getTransactions } from '../../actual-api.js';
+import { getTransactions, getCategories, getPayees } from '../../actual-api.js';
 
 describe('fetchTransactionsForAccount', () => {
   beforeEach(() => {
@@ -32,6 +34,8 @@ describe('fetchTransactionsForAccount', () => {
       },
     ];
     vi.mocked(getTransactions).mockResolvedValue(mockTransactions);
+    vi.mocked(getCategories).mockResolvedValue([]);
+    vi.mocked(getPayees).mockResolvedValue([]);
 
     const result = await fetchTransactionsForAccount('acc1', '2023-01-01', '2023-01-31');
 
@@ -40,6 +44,8 @@ describe('fetchTransactionsForAccount', () => {
   });
 
   it('should handle API errors', async () => {
+    vi.mocked(getCategories).mockResolvedValue([]);
+    vi.mocked(getPayees).mockResolvedValue([]);
     vi.mocked(getTransactions).mockRejectedValue(new Error('Transactions API Error'));
 
     await expect(fetchTransactionsForAccount('acc1', '2023-01-01', '2023-01-31')).rejects.toThrow(
@@ -49,6 +55,8 @@ describe('fetchTransactionsForAccount', () => {
   });
 
   it('should handle empty response', async () => {
+    vi.mocked(getCategories).mockResolvedValue([]);
+    vi.mocked(getPayees).mockResolvedValue([]);
     vi.mocked(getTransactions).mockResolvedValue([]);
 
     const result = await fetchTransactionsForAccount('acc1', '2023-01-01', '2023-01-31');
@@ -74,6 +82,8 @@ describe('fetchAllOnBudgetTransactions', () => {
     const mockTransactions1 = [{ id: '1', account: 'acc1', date: '2023-01-01', amount: -100 }];
     const mockTransactions2 = [{ id: '2', account: 'acc2', date: '2023-01-01', amount: -50 }];
 
+    vi.mocked(getCategories).mockResolvedValue([]);
+    vi.mocked(getPayees).mockResolvedValue([]);
     vi.mocked(getTransactions).mockResolvedValueOnce(mockTransactions1).mockResolvedValueOnce(mockTransactions2);
 
     const result = await fetchAllOnBudgetTransactions(mockAccounts, '2023-01-01', '2023-01-31');
@@ -106,6 +116,8 @@ describe('fetchAllOnBudgetTransactions', () => {
   it('should handle API errors for individual accounts', async () => {
     const mockAccounts: Account[] = [{ id: 'acc1', name: 'Checking', offbudget: false, closed: false }];
 
+    vi.mocked(getCategories).mockResolvedValue([]);
+    vi.mocked(getPayees).mockResolvedValue([]);
     vi.mocked(getTransactions).mockRejectedValue(new Error('Transaction API Error'));
 
     await expect(fetchAllOnBudgetTransactions(mockAccounts, '2023-01-01', '2023-01-31')).rejects.toThrow(

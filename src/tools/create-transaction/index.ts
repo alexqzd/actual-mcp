@@ -10,7 +10,10 @@ import { zodToJsonSchema } from 'zod-to-json-schema';
 
 export const schema = {
   name: 'create-transaction',
-  description: 'Create a new transaction with all fields, creating payees and categories if necessary',
+  description:
+    'Create a new transaction using IDs for account, payee, and category. ' +
+    'IMPORTANT: This tool uses IDs, not names. Use get-accounts to find account IDs, ' +
+    'get-payees to find payee IDs, and get-grouped-categories to find category IDs.',
   inputSchema: zodToJsonSchema(CreateTransactionArgsSchema) as ToolInput,
 };
 

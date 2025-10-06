@@ -19,8 +19,8 @@ export const GetTransactionsArgsSchema = z.object({
   endDate: z.string().optional(),
   minAmount: z.number().optional(),
   maxAmount: z.number().optional(),
-  category: z.string().optional(),
-  payee: z.string().optional(),
+  categoryId: z.string().optional(),
+  payeeId: z.string().optional(),
   limit: z.number().optional(),
 });
 
@@ -87,15 +87,15 @@ export const CreateTransactionArgsSchema = z.object({
   accountId: z.string(),
   date: z.string(),
   amount: z.number(),
-  payeeName: z.string().optional(),
-  categoryName: z.string().optional(),
+  payeeId: z.string().optional(),
+  categoryId: z.string().optional(),
   notes: z.string().optional(),
   cleared: z.boolean().optional(),
   subtransactions: z
     .array(
       z.object({
         amount: z.number(),
-        categoryName: z.string(),
+        categoryId: z.string(),
         notes: z.string().optional(),
       })
     )

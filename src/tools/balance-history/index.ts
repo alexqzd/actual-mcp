@@ -11,7 +11,7 @@ import { zodToJsonSchema } from 'zod-to-json-schema';
 
 export const schema = {
   name: 'balance-history',
-  description: 'Get account balance history over time',
+  description: 'Get account balance history over time using account ID. Use get-accounts to find account IDs.',
   inputSchema: zodToJsonSchema(BalanceHistoryArgsSchema) as ToolInput,
 };
 
