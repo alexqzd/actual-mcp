@@ -12,13 +12,8 @@ export const schema = {
   name: 'update-transaction',
   description:
     'Update an existing transaction using IDs for transaction, category, and payee. ' +
-    'Use get-transactions to find transaction IDs, get-grouped-categories for category IDs, and get-payees for payee IDs.' +
-    '\n\nIMPORTANT LIMITATIONS WITH SPLIT TRANSACTIONS:\n' +
-    '- Updating parent split transactions (date, notes, amount) may not persist correctly in the UI due to Actual Budget API limitations\n' +
-    '- To update split transactions reliably: update individual subtransactions using their IDs, or delete and recreate the split\n' +
-    '- Updating category on subtransactions works, but verify changes in the UI\n' +
-    '- DO NOT pass an empty subtransactions array - this will corrupt the transaction and may crash the app\n' +
-    '- When updating subtransaction amounts, ensure the total matches the parent amount to avoid "Amount left" errors',
+    'Use get-transactions to find transaction IDs, get-grouped-categories for category IDs, and get-payees for payee IDs. ' +
+    'Note: For split transactions, update individual subtransactions using their IDs for reliable results.',
   inputSchema: zodToJsonSchema(UpdateTransactionArgsSchema) as ToolInput,
 };
 
