@@ -30,6 +30,7 @@ console.debug = () => {};
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import express, { NextFunction, Request, Response } from 'express';
 import { parseArgs } from 'util';
 import { initActualApi, shutdownActualApi } from './actual-api.js';
@@ -90,6 +91,7 @@ const {
     'enable-write': enableWrite,
     'enable-bearer': enableBearer,
     port,
+    host,
     'test-resources': testResources,
     'test-custom': testCustom,
   },
@@ -99,6 +101,7 @@ const {
     'enable-write': { type: 'boolean', default: false },
     'enable-bearer': { type: 'boolean', default: false },
     port: { type: 'string' },
+    host: { type: 'string' },
     'test-resources': { type: 'boolean', default: false },
     'test-custom': { type: 'boolean', default: false },
   },
@@ -106,6 +109,7 @@ const {
 });
 
 const resolvedPort = port ? parseInt(port, 10) : 3000;
+const resolvedHost = host || '0.0.0.0'; // Default to all interfaces
 
 // Bearer authentication middleware
 const bearerAuth = (req: Request, res: Response, next: NextFunction): void => {
@@ -213,12 +217,98 @@ async function main(): Promise<void> {
       logger.info('auth', { message: 'Bearer authentication disabled - endpoints are public' });
     }
 
-    // Placeholder for future HTTP transport (stateless)
+    // HTTP transport (stateless)
     app.post('/mcp', bearerAuth, async (req: Request, res: Response) => {
-      res.status(501).json({ error: 'HTTP transport not implemented yet' });
+      try {
+        // In stateless mode, create a new instance of transport and server for each request
+        // to ensure complete isolation. A single instance would cause request ID collisions
+        // when multiple clients connect concurrently.
+        const requestServer = new Server(
+          {
+            name: 'Actual Budget',
+            version: '1.0.0',
+          },
+          {
+            capabilities: {
+              resources: {},
+              tools: {},
+              prompts: {},
+              logging: {},
+            },
+          }
+        );
+
+        // Setup tools, resources, and prompts for this request's server instance
+        setupResources(requestServer);
+        setupTools(requestServer, enableWrite);
+        setupPrompts(requestServer);
+
+        // Setup logging for this server instance
+        requestServer.setRequestHandler(SetLevelsRequestSchema, (request: any) => {
+          const levels = request.params.levels as Record<string, McpLogLevel | null>;
+          logger.setLevels(levels);
+          return {};
+        });
+        requestServer.setRequestHandler(SetLevelRequestSchema, (request: any) => {
+          const lvl = request.params.level as McpLogLevel;
+          logger.setLevel('.', lvl);
+          return {};
+        });
+
+        const transport = new StreamableHTTPServerTransport({
+          sessionIdGenerator: undefined, // Stateless mode
+        });
+
+        res.on('close', () => {
+          logger.debug('http', { message: 'HTTP request closed' });
+          transport.close();
+          requestServer.close();
+        });
+
+        await requestServer.connect(transport);
+        logger.connect(requestServer);
+        await transport.handleRequest(req, res, req.body);
+      } catch (error) {
+        logger.error('http', { message: 'Error handling MCP request', error });
+        if (!res.headersSent) {
+          res.status(500).json({
+            jsonrpc: '2.0',
+            error: {
+              code: -32603,
+              message: 'Internal server error',
+            },
+            id: null,
+          });
+        }
+      }
     });
 
-    app.get('/sse', bearerAuth, (req: Request, res: Response) => {
+    // GET and DELETE not supported in stateless HTTP mode
+    app.get('/mcp', bearerAuth, (_req: Request, res: Response) => {
+      logger.debug('http', { message: 'Received GET request to /mcp (not supported in stateless mode)' });
+      res.status(405).json({
+        jsonrpc: '2.0',
+        error: {
+          code: -32000,
+          message: 'Method not allowed. SSE notifications not supported in stateless mode.',
+        },
+        id: null,
+      });
+    });
+
+    app.delete('/mcp', bearerAuth, (_req: Request, res: Response) => {
+      logger.debug('http', { message: 'Received DELETE request to /mcp (not supported in stateless mode)' });
+      res.status(405).json({
+        jsonrpc: '2.0',
+        error: {
+          code: -32000,
+          message: 'Method not allowed. Session termination not supported in stateless mode.',
+        },
+        id: null,
+      });
+    });
+
+    app.get('/sse', bearerAuth, (_req: Request, res: Response) => {
       transport = new SSEServerTransport('/messages', res);
       server.connect(transport).then(() => {
         logger.connect(server);
@@ -233,11 +323,13 @@ async function main(): Promise<void> {
       }
     });
 
-    app.listen(resolvedPort, (error: any) => {
+    app.listen(resolvedPort, resolvedHost, (error: any) => {
       if (error) {
         logger.error('main', { message: 'Server listen error', error });
       } else {
-        logger.info('main', { message: `Actual Budget MCP Server (SSE) started on port ${resolvedPort}` });
+        logger.info('main', {
+          message: `Actual Budget MCP Server (SSE) started on ${resolvedHost}:${resolvedPort}`,
+        });
       }
     });
   } else {
