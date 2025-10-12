@@ -19,6 +19,8 @@ const DEFAULT_DATA_DIR: string = path.resolve(os.homedir() || '.', '.actual');
 let initialized = false;
 let initializing = false;
 let initializationError: Error | null = null;
+let currentBudgetId: string | null = null;
+let apiInitialized = false;
 
 /**
  * Initialize the Actual Budget API
@@ -34,17 +36,23 @@ export async function initActualApi(): Promise<void> {
     return;
   }
 
+  initializing = true;
   try {
     logger.info('actual-api', { message: 'Initializing Actual Budget API...' });
     const dataDir = process.env.ACTUAL_DATA_DIR || DEFAULT_DATA_DIR;
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true });
     }
-    await api.init({
-      dataDir,
-      serverURL: process.env.ACTUAL_SERVER_URL,
-      password: process.env.ACTUAL_PASSWORD,
-    });
+
+    // Only call api.init() once
+    if (!apiInitialized) {
+      await api.init({
+        dataDir,
+        serverURL: process.env.ACTUAL_SERVER_URL,
+        password: process.env.ACTUAL_PASSWORD,
+      });
+      apiInitialized = true;
+    }
 
     const budgets: BudgetFile[] = await api.getBudgets();
     if (!budgets || budgets.length === 0) {
@@ -53,14 +61,30 @@ export async function initActualApi(): Promise<void> {
 
     // Use specified budget or the first one
     const budgetId: string = process.env.ACTUAL_BUDGET_SYNC_ID || budgets[0].cloudFileId || budgets[0].id || '';
-    logger.info('actual-api', { message: 'Loading budget', budgetId });
-    await api.downloadBudget(budgetId);
+
+    // Only download budget if it's different from the current one
+    if (currentBudgetId !== budgetId) {
+      logger.info('actual-api', { message: 'Loading budget', budgetId });
+      await api.downloadBudget(budgetId);
+      currentBudgetId = budgetId;
+    } else {
+      logger.info('actual-api', { message: 'Budget already loaded', budgetId });
+    }
 
     initialized = true;
     logger.info('actual-api', { message: 'Actual Budget API initialized successfully' });
   } catch (error) {
     logger.error('actual-api', { message: 'Failed to initialize Actual Budget API', error });
     initializationError = error instanceof Error ? error : new Error(String(error));
+    // Clean up partial initialization
+    initialized = false;
+    currentBudgetId = null;
+    try {
+      await api.shutdown();
+      apiInitialized = false;
+    } catch (shutdownError) {
+      logger.error('actual-api', { message: 'Error during cleanup after failed initialization', error: shutdownError });
+    }
     throw initializationError;
   } finally {
     initializing = false;
@@ -74,6 +98,9 @@ export async function shutdownActualApi(): Promise<void> {
   if (!initialized) return;
   await api.shutdown();
   initialized = false;
+  initializationError = null;
+  currentBudgetId = null;
+  apiInitialized = false;
 }
 
 // ----------------------------

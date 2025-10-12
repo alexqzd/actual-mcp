@@ -46,43 +46,55 @@ import { logger, type McpLogLevel } from './core/logger.js';
 const LevelLiterals = ['emergency', 'alert', 'critical', 'error', 'warning', 'notice', 'info', 'debug'] as const;
 const LevelEnum = z.enum(LevelLiterals);
 
-// Initialize the MCP server
-const server = new Server(
-  {
-    name: 'Actual Budget',
-    version: '1.0.0',
-  },
-  {
-    capabilities: {
-      resources: {},
-      tools: {},
-      prompts: {},
-      logging: {},
+/**
+ * Creates a new MCP server instance with all tools, resources, and prompts configured.
+ * Used for stdio mode and for creating per-connection server instances in SSE mode.
+ */
+function createServerInstance(enableWrite: boolean = false): Server {
+  const server = new Server(
+    {
+      name: 'Actual Budget',
+      version: '1.0.0',
     },
-  }
-);
+    {
+      capabilities: {
+        resources: {},
+        tools: {},
+        prompts: {},
+        logging: {},
+      },
+    }
+  );
 
-// Setup logging request schemas and handlers
-const SetLevelsRequestSchema = z.object({
-  method: z.literal('logging/setLevels'),
-  params: z.object({ levels: z.record(z.string(), LevelEnum.nullable()) }),
-});
-server.setRequestHandler(SetLevelsRequestSchema, (request: any) => {
-  const levels = request.params.levels as Record<string, McpLogLevel | null>;
-  logger.setLevels(levels);
-  return {};
-});
+  // Setup logging request schemas and handlers
+  const SetLevelsRequestSchema = z.object({
+    method: z.literal('logging/setLevels'),
+    params: z.object({ levels: z.record(z.string(), LevelEnum.nullable()) }),
+  });
+  server.setRequestHandler(SetLevelsRequestSchema, (request: any) => {
+    const levels = request.params.levels as Record<string, McpLogLevel | null>;
+    logger.setLevels(levels);
+    return {};
+  });
 
-// Define SetLevel schema with level enum
-const SetLevelRequestSchema = z.object({
-  method: z.literal('logging/setLevel'),
-  params: z.object({ level: LevelEnum }),
-});
-server.setRequestHandler(SetLevelRequestSchema, (request: any) => {
-  const lvl = request.params.level as McpLogLevel;
-  logger.setLevel('.', lvl);
-  return {};
-});
+  // Define SetLevel schema with level enum
+  const SetLevelRequestSchema = z.object({
+    method: z.literal('logging/setLevel'),
+    params: z.object({ level: LevelEnum }),
+  });
+  server.setRequestHandler(SetLevelRequestSchema, (request: any) => {
+    const lvl = request.params.level as McpLogLevel;
+    logger.setLevel('.', lvl);
+    return {};
+  });
+
+  // Setup resources, tools, and prompts
+  setupResources(server);
+  setupTools(server, enableWrite);
+  setupPrompts(server);
+
+  return server;
+}
 
 // Argument parsing
 const {
@@ -208,7 +220,10 @@ async function main(): Promise<void> {
   if (useSse) {
     const app = express();
     app.use(express.json());
-    let transport: SSEServerTransport | null = null;
+
+    // Session-based transport management for SSE connections
+    // Each SSE connection gets its own transport and server instance
+    const sessions = new Map<string, { transport: SSEServerTransport; server: Server }>();
 
     // Log bearer auth status
     if (enableBearer) {
@@ -223,37 +238,7 @@ async function main(): Promise<void> {
         // In stateless mode, create a new instance of transport and server for each request
         // to ensure complete isolation. A single instance would cause request ID collisions
         // when multiple clients connect concurrently.
-        const requestServer = new Server(
-          {
-            name: 'Actual Budget',
-            version: '1.0.0',
-          },
-          {
-            capabilities: {
-              resources: {},
-              tools: {},
-              prompts: {},
-              logging: {},
-            },
-          }
-        );
-
-        // Setup tools, resources, and prompts for this request's server instance
-        setupResources(requestServer);
-        setupTools(requestServer, enableWrite);
-        setupPrompts(requestServer);
-
-        // Setup logging for this server instance
-        requestServer.setRequestHandler(SetLevelsRequestSchema, (request: any) => {
-          const levels = request.params.levels as Record<string, McpLogLevel | null>;
-          logger.setLevels(levels);
-          return {};
-        });
-        requestServer.setRequestHandler(SetLevelRequestSchema, (request: any) => {
-          const lvl = request.params.level as McpLogLevel;
-          logger.setLevel('.', lvl);
-          return {};
-        });
+        const requestServer = createServerInstance(enableWrite);
 
         const transport = new StreamableHTTPServerTransport({
           sessionIdGenerator: undefined, // Stateless mode
@@ -308,18 +293,80 @@ async function main(): Promise<void> {
       });
     });
 
-    app.get('/sse', bearerAuth, (_req: Request, res: Response) => {
-      transport = new SSEServerTransport('/messages', res);
-      server.connect(transport).then(() => {
-        logger.connect(server);
-        logger.info('main', { message: `Actual Budget MCP Server (SSE) started on port ${resolvedPort}` });
-      });
+    // SSE endpoint for establishing persistent connections
+    app.get('/sse', bearerAuth, async (req: Request, res: Response) => {
+      logger.info('sse', { message: 'Received GET request to /sse (establishing SSE stream)' });
+      try {
+        // Create a new SSE transport for this client
+        // The endpoint for POST messages is '/messages'
+        const transport = new SSEServerTransport('/messages', res);
+
+        // Extract the session ID generated by the transport
+        const sessionId = transport.sessionId;
+
+        // Create a new server instance for this session
+        const sessionServer = createServerInstance(enableWrite);
+
+        // Store the session
+        sessions.set(sessionId, { transport, server: sessionServer });
+
+        // Set up cleanup handler when connection closes
+        transport.onclose = () => {
+          logger.info('sse', { message: `SSE connection closed for session ${sessionId}` });
+          sessions.delete(sessionId);
+          sessionServer.close();
+        };
+
+        // Connect the transport to the server
+        await sessionServer.connect(transport);
+        logger.connect(sessionServer);
+
+        logger.info('sse', {
+          message: `SSE connection established with session ID: ${sessionId}`,
+          sessionId,
+          activeSessions: sessions.size
+        });
+      } catch (error) {
+        logger.error('sse', { message: 'Error establishing SSE stream', error });
+        if (!res.headersSent) {
+          res.status(500).send('Error establishing SSE stream');
+        }
+      }
     });
+
+    // Messages endpoint for receiving client JSON-RPC requests
     app.post('/messages', bearerAuth, async (req: Request, res: Response) => {
-      if (transport) {
-        await transport.handlePostMessage(req, res, req.body);
-      } else {
-        res.status(500).json({ error: 'Transport not initialized' });
+      logger.debug('sse', { message: 'Received POST request to /messages' });
+
+      // Extract session ID from URL query parameter
+      // The SSE protocol adds this based on the endpoint event
+      const sessionId = req.query.sessionId as string | undefined;
+
+      if (!sessionId) {
+        logger.error('sse', { message: 'No session ID provided in request URL' });
+        res.status(400).json({ error: 'Missing sessionId parameter' });
+        return;
+      }
+
+      const session = sessions.get(sessionId);
+      if (!session) {
+        logger.error('sse', {
+          message: `No active session found for ID: ${sessionId}`,
+          sessionId,
+          activeSessions: Array.from(sessions.keys())
+        });
+        res.status(404).json({ error: 'Session not found' });
+        return;
+      }
+
+      try {
+        // Handle the POST message with the correct transport for this session
+        await session.transport.handlePostMessage(req, res, req.body);
+      } catch (error) {
+        logger.error('sse', { message: 'Error handling POST message', error, sessionId });
+        if (!res.headersSent) {
+          res.status(500).json({ error: 'Error handling request' });
+        }
       }
     });
 
@@ -332,17 +379,42 @@ async function main(): Promise<void> {
         });
       }
     });
+
+    // Handle server shutdown - cleanup all active sessions
+    process.on('SIGINT', async () => {
+      logger.info('main', { message: 'SIGINT received, shutting down SSE server' });
+
+      // Close all active SSE sessions
+      for (const [sessionId, session] of sessions.entries()) {
+        try {
+          logger.info('sse', { message: `Closing session ${sessionId}` });
+          await session.transport.close();
+          session.server.close();
+          sessions.delete(sessionId);
+        } catch (error) {
+          logger.error('sse', { message: `Error closing session ${sessionId}`, error });
+        }
+      }
+
+      logger.info('main', { message: 'SSE server shutdown complete' });
+      process.exit(0);
+    });
   } else {
+    // Create server instance for stdio mode with enableWrite flag
+    const stdioServer = createServerInstance(enableWrite);
     const transport = new StdioServerTransport();
-    await server.connect(transport);
-    logger.connect(server);
+    await stdioServer.connect(transport);
+    logger.connect(stdioServer);
     logger.info('main', { message: 'Actual Budget MCP Server (stdio) started' });
+
+    // Handle SIGINT for stdio mode
+    process.on('SIGINT', () => {
+      logger.info('main', { message: 'SIGINT received, shutting down server' });
+      stdioServer.close();
+      process.exit(0);
+    });
   }
 }
-
-setupResources(server);
-setupTools(server, enableWrite);
-setupPrompts(server);
 
 // Handle unhandled promise rejections and exceptions to prevent crashes
 // IMPORTANT: These handlers prevent Node.js from printing stack traces to stderr,
@@ -355,12 +427,6 @@ process.on('uncaughtException', (error) => {
   logger.error('main', { message: 'Uncaught Exception', error: error.message, stack: error.stack });
   // In stdio mode, we can't let Node crash with a stack trace to stderr
   // Log it via MCP and continue running
-});
-
-process.on('SIGINT', () => {
-  logger.info('main', { message: 'SIGINT received, shutting down server' });
-  server.close();
-  process.exit(0);
 });
 
 // Enable console fallback for SSE mode (allows console.* before connection)
