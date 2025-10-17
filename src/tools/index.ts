@@ -42,7 +42,7 @@ import * as spendingByCategory from './spending-by-category/index.js';
 import * as updateTransaction from './update-transaction/index.js';
 import * as createTransaction from './create-transaction/index.js';
 import * as deleteTransaction from './delete-transaction/index.js';
-import * as getBudgetMonths from './budget/get-budget-months/index.js';
+import * as listAvailableMonths from './budget/list-available-months/index.js';
 import * as getBudgetMonth from './budget/get-budget-month/index.js';
 import * as setBudgetAmount from './budget/set-budget-amount/index.js';
 import * as setBudgetCarryover from './budget/set-budget-carryover/index.js';
@@ -58,7 +58,7 @@ const readTools = [
   getGroupedCategories,
   getPayees,
   // getRules, // We don't want the AI to see user rules yet
-  getBudgetMonths,
+  listAvailableMonths,
   getBudgetMonth,
 ];
 

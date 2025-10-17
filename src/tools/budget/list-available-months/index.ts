@@ -1,5 +1,5 @@
 // ----------------------------
-// GET BUDGET MONTHS TOOL
+// LIST AVAILABLE MONTHS TOOL
 // ----------------------------
 
 import { getBudgetMonths } from '../../../actual-api.js';
@@ -7,7 +7,7 @@ import { errorFromCatch } from '../../../utils/response.js';
 import { buildQueryResponse } from '../../../utils/report-builder.js';
 
 export const schema = {
-  name: 'get-budget-months',
+  name: 'list-available-months',
   description:
     'Get a list of all available budget months. Use this to find which months have budget data before querying specific month details.',
   inputSchema: {

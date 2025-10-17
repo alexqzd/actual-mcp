@@ -48,6 +48,7 @@ export async function handler(
       forNextMonth: rawBudgetMonth.forNextMonth / 100,
       totalBudgeted: rawBudgetMonth.totalBudgeted / 100,
       toBudget: rawBudgetMonth.toBudget / 100,
+      expectedToBudget: rawBudgetMonth.expectedToBudget / 100,
       fromLastMonth: rawBudgetMonth.fromLastMonth / 100,
       totalIncome: rawBudgetMonth.totalIncome / 100,
       totalSpent: rawBudgetMonth.totalSpent / 100,
