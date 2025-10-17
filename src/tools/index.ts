@@ -8,13 +8,11 @@ import { initActualApi, shutdownActualApi } from '../actual-api.js';
 import {
   GetTransactionsArgs,
   SpendingByCategoryArgs,
-  MonthlySummaryArgs,
   BalanceHistoryArgs,
   CreateTransactionArgs,
 } from '../types.js';
 import { handler as getTransactionsHandler } from './get-transactions/index.js';
 import { handler as spendingByCategoryHandler } from './spending-by-category/index.js';
-import { handler as monthlySummaryHandler } from './monthly-summary/index.js';
 import { handler as balanceHistoryHandler } from './balance-history/index.js';
 import { handler as createTransactionHandler } from './create-transaction/index.js';
 import { error, errorFromCatch } from '../utils/response.js';
@@ -31,7 +29,7 @@ import * as updateCategoryGroup from './categories/update-category-group/index.j
 import * as updateCategory from './categories/update-category/index.js';
 import * as getAccounts from './get-accounts/index.js';
 import * as getTransactions from './get-transactions/index.js';
-import * as monthlySummary from './monthly-summary/index.js';
+import * as getBudgetSummary from './budget/get-budget-summary/index.js';
 import * as createPayee from './payees/create-payee/index.js';
 import * as deletePayee from './payees/delete-payee/index.js';
 import * as getPayees from './payees/get-payees/index.js';
@@ -54,7 +52,7 @@ import * as resetBudgetHold from './budget/reset-budget-hold/index.js';
 const readTools = [
   getTransactions,
   spendingByCategory,
-  // monthlySummary, // Summary is not accurate enough yet
+  getBudgetSummary,
   balanceHistory,
   getAccounts,
   getGroupedCategories,

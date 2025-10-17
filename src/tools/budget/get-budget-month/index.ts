@@ -9,7 +9,7 @@ import { buildQueryResponse } from '../../../utils/report-builder.js';
 export const schema = {
   name: 'get-budget-month',
   description:
-    'Get detailed budget data for a specific month including category budgets, spending, balances, income, and rollover amounts. Note: balance=0 means fully funded (not overspent), balance<0 means overspent. If spent>budgeted but balance>=0, extra funds came from carryover or deposits.',
+    'Get detailed budget data for a SINGLE specific month including complete category group and category breakdowns showing budgeted amounts, actual spending, and remaining balances. Use this for analyzing spending by category and detailed budget performance review. Note: balance=0 means fully funded (not overspent), balance<0 means overspent. If spent>budgeted but balance>=0, extra funds came from carryover or deposits. For high-level summaries across multiple months without category details, use get-budget-summary instead.',
   inputSchema: {
     type: 'object',
     properties: {

@@ -35,13 +35,6 @@ export const SpendingByCategoryArgsSchema = z.object({
 
 export type SpendingByCategoryArgs = z.infer<typeof SpendingByCategoryArgsSchema>;
 
-export const MonthlySummaryArgsSchema = z.object({
-  months: z.number().optional().default(3),
-  accountId: z.string().optional(),
-});
-
-export type MonthlySummaryArgs = z.infer<typeof MonthlySummaryArgsSchema>;
-
 export const BalanceHistoryArgsSchema = z.object({
   accountId: z.string(),
   includeOffBudget: z.boolean().optional().default(false),
