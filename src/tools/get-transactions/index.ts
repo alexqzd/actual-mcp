@@ -29,10 +29,10 @@ export async function handler(args: GetTransactionsArgs): Promise<CallToolResult
     let filtered = [...transactions];
 
     if (minAmount !== undefined) {
-      filtered = filtered.filter((t) => t.amount >= minAmount * 100);
+      filtered = filtered.filter((t) => t.amount >= minAmount);
     }
     if (maxAmount !== undefined) {
-      filtered = filtered.filter((t) => t.amount <= maxAmount * 100);
+      filtered = filtered.filter((t) => t.amount <= maxAmount);
     }
     if (categoryId) {
       filtered = filtered.filter((t) => t.category === categoryId);
@@ -50,8 +50,8 @@ export async function handler(args: GetTransactionsArgs): Promise<CallToolResult
     // Build filter description
     const filterParts = [
       startDate || endDate ? `Date range: ${startDate} to ${endDate}` : null,
-      minAmount !== undefined ? `Min amount: $${minAmount.toFixed(2)}` : null,
-      maxAmount !== undefined ? `Max amount: $${maxAmount.toFixed(2)}` : null,
+      minAmount !== undefined ? `Min amount: ${minAmount.toFixed(2)}` : null,
+      maxAmount !== undefined ? `Max amount: ${maxAmount.toFixed(2)}` : null,
       categoryId ? `Category ID: ${categoryId}` : null,
       payeeId ? `Payee ID: ${payeeId}` : null,
     ].filter(Boolean);

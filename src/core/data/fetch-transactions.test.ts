@@ -22,14 +22,14 @@ describe('fetchTransactionsForAccount', () => {
         id: '1',
         account: 'acc1',
         date: '2023-01-01',
-        amount: -100,
+        amount: -10000, // In cents
         payee: 'Store',
       },
       {
         id: '2',
         account: 'acc1',
         date: '2023-01-02',
-        amount: -50,
+        amount: -5000, // In cents
         payee: 'Gas Station',
       },
     ];
@@ -39,7 +39,11 @@ describe('fetchTransactionsForAccount', () => {
 
     const result = await fetchTransactionsForAccount('acc1', '2023-01-01', '2023-01-31');
 
-    expect(result).toEqual(mockTransactions);
+    // Expect amounts to be converted from cents to currency units
+    expect(result).toEqual([
+      expect.objectContaining({ id: '1', amount: -100 }),
+      expect.objectContaining({ id: '2', amount: -50 }),
+    ]);
     expect(getTransactions).toHaveBeenCalledWith('acc1', '2023-01-01', '2023-01-31');
   });
 
@@ -79,8 +83,8 @@ describe('fetchAllOnBudgetTransactions', () => {
       { id: 'acc4', name: 'Old Account', offbudget: false, closed: true }, // Should be excluded
     ];
 
-    const mockTransactions1 = [{ id: '1', account: 'acc1', date: '2023-01-01', amount: -100 }];
-    const mockTransactions2 = [{ id: '2', account: 'acc2', date: '2023-01-01', amount: -50 }];
+    const mockTransactions1 = [{ id: '1', account: 'acc1', date: '2023-01-01', amount: -10000 }]; // In cents
+    const mockTransactions2 = [{ id: '2', account: 'acc2', date: '2023-01-01', amount: -5000 }]; // In cents
 
     vi.mocked(getCategories).mockResolvedValue([]);
     vi.mocked(getPayees).mockResolvedValue([]);
@@ -88,7 +92,11 @@ describe('fetchAllOnBudgetTransactions', () => {
 
     const result = await fetchAllOnBudgetTransactions(mockAccounts, '2023-01-01', '2023-01-31');
 
-    expect(result).toEqual([...mockTransactions1, ...mockTransactions2]);
+    // Expect amounts to be converted from cents to currency units
+    expect(result).toEqual([
+      expect.objectContaining({ id: '1', amount: -100 }),
+      expect.objectContaining({ id: '2', amount: -50 }),
+    ]);
     expect(getTransactions).toHaveBeenCalledTimes(2);
     expect(getTransactions).toHaveBeenCalledWith('acc1', '2023-01-01', '2023-01-31');
     expect(getTransactions).toHaveBeenCalledWith('acc2', '2023-01-01', '2023-01-31');

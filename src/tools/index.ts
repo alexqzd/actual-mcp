@@ -48,9 +48,11 @@ import * as setBudgetAmount from './budget/set-budget-amount/index.js';
 import * as setBudgetCarryover from './budget/set-budget-carryover/index.js';
 import * as holdBudgetForNextMonth from './budget/hold-budget-for-next-month/index.js';
 import * as resetBudgetHold from './budget/reset-budget-hold/index.js';
+import * as searchTransactions from './search-transactions/index.js';
 
 const readTools = [
   getTransactions,
+  searchTransactions,
   spendingByCategory,
   getBudgetSummary,
   balanceHistory,

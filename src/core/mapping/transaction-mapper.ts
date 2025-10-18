@@ -13,7 +13,7 @@ export function mapTransaction(entity: any, categories: any[], payees: any[]): T
     id: entity.id,
     account: entity.account,
     date: entity.date,
-    amount: entity.amount,
+    amount: entity.amount / 100, // Convert cents to currency units
     notes: entity.notes,
     category: entity.category,
     category_name: category?.name,

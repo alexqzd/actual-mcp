@@ -97,6 +97,8 @@ export const CreateTransactionArgsSchema = z.object({
 
 export type CreateTransactionArgs = z.infer<typeof CreateTransactionArgsSchema>;
 
+export { SearchTransactionsArgsSchema, type SearchTransactionsArgs } from './tools/search-transactions/input-parser.js';
+
 // Additional types used in implementation
 export interface CategoryGroupInfo {
   id: string;

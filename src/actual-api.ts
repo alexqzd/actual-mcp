@@ -155,6 +155,48 @@ export async function getRules(): Promise<RuleEntity[]> {
   return api.getRules();
 }
 
+/**
+ * Execute a query using the Actual Budget query builder (ensures API is initialized)
+ *
+ * @param query - A query object created with q() - do NOT call .serialize() first as runQuery does this internally
+ * @returns Query results from the database
+ */
+export async function runQuery(query: QueryBuilder): Promise<{ data: unknown }> {
+  await initActualApi();
+  // api.runQuery() calls query.serialize() internally, so we pass the Query object directly
+  return api.runQuery(query) as Promise<{ data: unknown }>;
+}
+
+/**
+ * Query builder interface matching Actual Budget's query API
+ */
+export interface QueryBuilder {
+  filter(expr: any): QueryBuilder;
+  select(exprs?: any[]): QueryBuilder;
+  calculate(expr: any): QueryBuilder;
+  orderBy(exprs: any): QueryBuilder;
+  limit(num: number): QueryBuilder;
+  offset(num: number): QueryBuilder;
+  serialize(): any;
+}
+
+/**
+ * Get the query builder instance to construct queries
+ * Note: Does NOT require API initialization - query builder works without it
+ *
+ * @param table - The table name to query (e.g., 'transactions', 'accounts', 'categories')
+ * @returns Query builder instance
+ */
+export function q(table: string): QueryBuilder {
+  // Don't call initActualApi() here - query builder doesn't need it
+  // The query will be executed later via runQuery() which will init the API
+  const queryBuilder = api.q(table);
+  if (!queryBuilder || typeof queryBuilder.serialize !== 'function') {
+    throw new Error(`Failed to create query builder for table ${table}. Got: ${typeof queryBuilder}`);
+  }
+  return queryBuilder as QueryBuilder;
+}
+
 // ----------------------------
 // ACTION
 // ----------------------------

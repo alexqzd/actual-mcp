@@ -10,7 +10,7 @@ import { RuleEntity } from '@actual-app/api/@types/loot-core/src/types/models/ru
 
 export const schema = {
   name: 'get-rules',
-  description: 'Retrieve a list of all rules. PS amount comes in cents: positive for deposit, negative for payment',
+  description: 'Retrieve a list of all rules. Amount values: positive for deposit, negative for payment',
   inputSchema: {
     type: 'object',
     description: 'This tool does not accept any arguments.',
