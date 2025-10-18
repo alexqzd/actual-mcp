@@ -24,7 +24,7 @@ export function formatDate(date: Date | string | undefined | null): string {
 }
 
 /**
- * Format currency amounts for display
+ * Format currency amounts for display (expects amount in cents)
  */
 export function formatAmount(amount: number | undefined | null): string {
   if (amount === undefined || amount === null) return 'N/A';
@@ -35,6 +35,19 @@ export function formatAmount(amount: number | undefined | null): string {
     style: 'currency',
     currency: 'USD',
   }).format(dollars);
+}
+
+/**
+ * Format currency amounts for display (expects amount already in dollars/currency units)
+ * Use this when the amount has already been converted from cents (e.g., after mapTransaction)
+ */
+export function formatAmountFromDollars(amount: number | undefined | null): string {
+  if (amount === undefined || amount === null) return 'N/A';
+
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+  }).format(amount);
 }
 
 // Helper to calculate start/end date strings for the N most recent months

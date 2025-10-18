@@ -6,10 +6,8 @@ import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import { SearchTransactionsInputParser, SearchTransactionsArgsSchema } from './input-parser.js';
 import { SearchTransactionsDataFetcher } from './data-fetcher.js';
-import { SearchTransactionsReportGenerator } from './report-generator.js';
 import { errorFromCatch } from '../../utils/response.js';
-import { buildReportResponse, createReportSection } from '../../utils/report-builder.js';
-import type { SearchFilters } from './types.js';
+import { buildQueryResponse } from '../../utils/report-builder.js';
 import type { ToolInput } from '../../types.js';
 
 export const schema = {
@@ -41,26 +39,16 @@ export async function handler(args: unknown): Promise<CallToolResult> {
     if (input.endDate) activeFilters.endDate = input.endDate;
     if (input.accountId) activeFilters.accountId = input.accountId;
 
-    // Generate markdown report
-    const markdown = new SearchTransactionsReportGenerator().generate(
-      result.transactions,
-      result.pagination,
-      activeFilters as SearchFilters
-    );
-
-    // Build summary
-    const summary = `Found ${result.totalCount} transactions (page ${result.pagination.page} of ${result.pagination.totalPages})`;
-
     // Return structured response
-    return buildReportResponse({
-      operation: 'report',
+    return buildQueryResponse({
       resourceType: 'transaction',
-      summary,
-      sections: [createReportSection('Search Results', markdown)],
       data: result.transactions,
+      summary: `Found ${result.totalCount} transactions (page ${result.pagination.page} of ${result.pagination.totalPages})`,
       metadata: {
-        filters: activeFilters,
-        ...({ pagination: result.pagination, totalCount: result.totalCount } as any),
+        count: result.transactions.length,
+        filters: Object.keys(activeFilters).length > 0 ? activeFilters : undefined,
+        pagination: result.pagination,
+        totalCount: result.totalCount,
       },
     });
   } catch (err) {

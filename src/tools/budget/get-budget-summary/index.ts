@@ -86,6 +86,12 @@ export async function handler(
       );
     }
 
+    // Helper to convert cents to dollars, preserving null/undefined
+    const convertCents = (value: number | null | undefined): number | null => {
+      if (value === null || value === undefined) return null;
+      return value / 100;
+    };
+
     // Fetch each month's budget data
     const budgetData = await Promise.all(
       monthsToFetch.map(async (monthString) => {
@@ -96,16 +102,16 @@ export async function handler(
 
         return {
           ...monthData,
-          incomeAvailable: monthData.incomeAvailable / 100,
-          lastMonthOverspent: monthData.lastMonthOverspent / 100,
-          forNextMonth: monthData.forNextMonth / 100,
-          totalBudgeted: monthData.totalBudgeted / 100,
-          toBudget: monthData.toBudget / 100,
-          expectedToBudget: monthData.expectedToBudget / 100,
-          fromLastMonth: monthData.fromLastMonth / 100,
-          totalIncome: monthData.totalIncome / 100,
-          totalSpent: monthData.totalSpent / 100,
-          totalBalance: monthData.totalBalance / 100,
+          incomeAvailable: convertCents(monthData.incomeAvailable),
+          lastMonthOverspent: convertCents(monthData.lastMonthOverspent),
+          forNextMonth: convertCents(monthData.forNextMonth),
+          totalBudgeted: convertCents(monthData.totalBudgeted),
+          toBudget: convertCents(monthData.toBudget),
+          expectedToBudget: convertCents(monthData.expectedToBudget),
+          fromLastMonth: convertCents(monthData.fromLastMonth),
+          totalIncome: convertCents(monthData.totalIncome),
+          totalSpent: convertCents(monthData.totalSpent),
+          totalBalance: convertCents(monthData.totalBalance),
         };
       })
     );

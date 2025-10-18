@@ -5,12 +5,7 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { initActualApi, shutdownActualApi } from '../actual-api.js';
-import {
-  GetTransactionsArgs,
-  SpendingByCategoryArgs,
-  BalanceHistoryArgs,
-  CreateTransactionArgs,
-} from '../types.js';
+import { GetTransactionsArgs, SpendingByCategoryArgs, BalanceHistoryArgs, CreateTransactionArgs } from '../types.js';
 import { handler as getTransactionsHandler } from './get-transactions/index.js';
 import { handler as spendingByCategoryHandler } from './spending-by-category/index.js';
 import { handler as balanceHistoryHandler } from './balance-history/index.js';

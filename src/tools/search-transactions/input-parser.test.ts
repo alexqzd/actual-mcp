@@ -137,9 +137,7 @@ describe('SearchTransactionsInputParser', () => {
     it('should reject input with no search criteria', () => {
       const input = {};
 
-      expect(() => parser.parse(input)).toThrow(
-        'At least one search criterion must be provided'
-      );
+      expect(() => parser.parse(input)).toThrow('At least one search criterion must be provided');
     });
 
     it('should reject input with only page number', () => {
@@ -147,9 +145,7 @@ describe('SearchTransactionsInputParser', () => {
         page: 2,
       };
 
-      expect(() => parser.parse(input)).toThrow(
-        'At least one search criterion must be provided'
-      );
+      expect(() => parser.parse(input)).toThrow('At least one search criterion must be provided');
     });
 
     it('should reject when minAmount > maxAmount', () => {
@@ -159,9 +155,7 @@ describe('SearchTransactionsInputParser', () => {
         maxAmount: 50,
       };
 
-      expect(() => parser.parse(input)).toThrow(
-        'minAmount cannot be greater than maxAmount'
-      );
+      expect(() => parser.parse(input)).toThrow('minAmount cannot be greater than maxAmount');
     });
 
     it('should reject invalid date format', () => {

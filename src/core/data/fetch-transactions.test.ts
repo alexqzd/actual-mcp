@@ -39,10 +39,10 @@ describe('fetchTransactionsForAccount', () => {
 
     const result = await fetchTransactionsForAccount('acc1', '2023-01-01', '2023-01-31');
 
-    // Expect amounts to be converted from cents to currency units
+    // Expect amounts to remain in cents (not converted)
     expect(result).toEqual([
-      expect.objectContaining({ id: '1', amount: -100 }),
-      expect.objectContaining({ id: '2', amount: -50 }),
+      expect.objectContaining({ id: '1', amount: -10000 }),
+      expect.objectContaining({ id: '2', amount: -5000 }),
     ]);
     expect(getTransactions).toHaveBeenCalledWith('acc1', '2023-01-01', '2023-01-31');
   });
@@ -92,10 +92,10 @@ describe('fetchAllOnBudgetTransactions', () => {
 
     const result = await fetchAllOnBudgetTransactions(mockAccounts, '2023-01-01', '2023-01-31');
 
-    // Expect amounts to be converted from cents to currency units
+    // Expect amounts to remain in cents (not converted)
     expect(result).toEqual([
-      expect.objectContaining({ id: '1', amount: -100 }),
-      expect.objectContaining({ id: '2', amount: -50 }),
+      expect.objectContaining({ id: '1', amount: -10000 }),
+      expect.objectContaining({ id: '2', amount: -5000 }),
     ]);
     expect(getTransactions).toHaveBeenCalledTimes(2);
     expect(getTransactions).toHaveBeenCalledWith('acc1', '2023-01-01', '2023-01-31');

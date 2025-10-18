@@ -16,7 +16,14 @@ export const SearchTransactionsArgsSchema = z.object({
   endDate: z.string().optional().describe('End date in YYYY-MM-DD format'),
   accountId: z.string().optional().describe('Account ID to filter by'),
   page: z.number().int().positive().optional().default(1).describe('Page number (1-indexed)'),
-  pageSize: z.number().int().positive().max(500).optional().default(50).describe('Number of results per page (max 500)'),
+  pageSize: z
+    .number()
+    .int()
+    .positive()
+    .max(500)
+    .optional()
+    .default(50)
+    .describe('Number of results per page (max 500)'),
 });
 
 export type SearchTransactionsArgs = z.infer<typeof SearchTransactionsArgsSchema>;

@@ -23,6 +23,24 @@ export interface PeriodMetadata {
 }
 
 /**
+ * Pagination metadata
+ */
+export interface PaginationMetadata {
+  /** Current page number */
+  page: number;
+  /** Number of items per page */
+  pageSize: number;
+  /** Total number of results across all pages */
+  totalResults: number;
+  /** Total number of pages */
+  totalPages: number;
+  /** Whether there is a next page */
+  hasNextPage: boolean;
+  /** Whether there is a previous page */
+  hasPreviousPage: boolean;
+}
+
+/**
  * Query-specific metadata
  */
 export interface QueryMetadata extends BaseMetadata {
@@ -30,10 +48,14 @@ export interface QueryMetadata extends BaseMetadata {
   count?: number;
   /** Total number of items available (before filtering) */
   total?: number;
+  /** Total count (alias for backward compatibility) */
+  totalCount?: number;
   /** Filters applied to the query */
   filters?: Record<string, unknown>;
   /** Period/date range for the query */
   period?: PeriodMetadata;
+  /** Pagination information */
+  pagination?: PaginationMetadata;
 }
 
 /**

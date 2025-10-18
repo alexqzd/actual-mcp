@@ -3,9 +3,8 @@ import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { GetTransactionsInputParser } from './input-parser.js';
 import { GetTransactionsDataFetcher } from './data-fetcher.js';
 import { GetTransactionsMapper } from './transaction-mapper.js';
-import { GetTransactionsReportGenerator } from './report-generator.js';
 import { errorFromCatch } from '../../utils/response.js';
-import { buildReportResponse, createReportSection } from '../../utils/report-builder.js';
+import { buildQueryResponse } from '../../utils/report-builder.js';
 import { getDateRange } from '../../utils.js';
 import { GetTransactionsArgsSchema, type GetTransactionsArgs, type ToolInput } from '../../types.js';
 import { zodToJsonSchema } from 'zod-to-json-schema';
@@ -47,37 +46,19 @@ export async function handler(args: GetTransactionsArgs): Promise<CallToolResult
     // Map transactions for output
     const mapped = new GetTransactionsMapper().map(filtered);
 
-    // Build filter description
-    const filterParts = [
-      startDate || endDate ? `Date range: ${startDate} to ${endDate}` : null,
-      minAmount !== undefined ? `Min amount: ${minAmount.toFixed(2)}` : null,
-      maxAmount !== undefined ? `Max amount: ${maxAmount.toFixed(2)}` : null,
-      categoryId ? `Category ID: ${categoryId}` : null,
-      payeeId ? `Payee ID: ${payeeId}` : null,
-    ].filter(Boolean);
-    const filterDescription = filterParts.length > 0 ? filterParts.join(', ') : 'No filters applied';
-
-    const markdown = new GetTransactionsReportGenerator().generate(
-      mapped,
-      filterDescription,
-      filtered.length,
-      transactions.length
-    );
-
-    // Build structured report response
+    // Build filters object
     const filters: Record<string, unknown> = {};
     if (categoryId) filters.categoryId = categoryId;
     if (payeeId) filters.payeeId = payeeId;
     if (minAmount !== undefined) filters.minAmount = minAmount;
     if (maxAmount !== undefined) filters.maxAmount = maxAmount;
 
-    return buildReportResponse({
-      operation: 'report',
+    return buildQueryResponse({
       resourceType: 'transaction',
-      summary: `Found ${filtered.length} of ${transactions.length} transactions`,
-      sections: [createReportSection('Transactions', markdown)],
       data: mapped,
+      summary: `Found ${filtered.length} of ${transactions.length} transactions`,
       metadata: {
+        count: filtered.length,
         period: { start: start, end: end },
         filters: Object.keys(filters).length > 0 ? filters : undefined,
       },

@@ -40,30 +40,36 @@ export async function handler(
     const monthString = `${year}-${String(month).padStart(2, '0')}`;
     const rawBudgetMonth = (await getBudgetMonth(monthString)) as any;
 
+    // Helper to convert cents to dollars, preserving null/undefined
+    const convertCents = (value: number | null | undefined): number | null => {
+      if (value === null || value === undefined) return null;
+      return value / 100;
+    };
+
     // Convert cents to dollars in the response
     const budgetMonth = {
       ...rawBudgetMonth,
-      incomeAvailable: rawBudgetMonth.incomeAvailable / 100,
-      lastMonthOverspent: rawBudgetMonth.lastMonthOverspent / 100,
-      forNextMonth: rawBudgetMonth.forNextMonth / 100,
-      totalBudgeted: rawBudgetMonth.totalBudgeted / 100,
-      toBudget: rawBudgetMonth.toBudget / 100,
-      expectedToBudget: rawBudgetMonth.expectedToBudget / 100,
-      fromLastMonth: rawBudgetMonth.fromLastMonth / 100,
-      totalIncome: rawBudgetMonth.totalIncome / 100,
-      totalSpent: rawBudgetMonth.totalSpent / 100,
-      totalBalance: rawBudgetMonth.totalBalance / 100,
+      incomeAvailable: convertCents(rawBudgetMonth.incomeAvailable),
+      lastMonthOverspent: convertCents(rawBudgetMonth.lastMonthOverspent),
+      forNextMonth: convertCents(rawBudgetMonth.forNextMonth),
+      totalBudgeted: convertCents(rawBudgetMonth.totalBudgeted),
+      toBudget: convertCents(rawBudgetMonth.toBudget),
+      expectedToBudget: convertCents(rawBudgetMonth.expectedToBudget),
+      fromLastMonth: convertCents(rawBudgetMonth.fromLastMonth),
+      totalIncome: convertCents(rawBudgetMonth.totalIncome),
+      totalSpent: convertCents(rawBudgetMonth.totalSpent),
+      totalBalance: convertCents(rawBudgetMonth.totalBalance),
       categoryGroups: rawBudgetMonth.categoryGroups?.map((group: any) => ({
         ...group,
-        budgeted: group.budgeted / 100,
-        spent: group.spent / 100,
-        balance: group.balance / 100,
+        budgeted: convertCents(group.budgeted),
+        spent: convertCents(group.spent),
+        balance: convertCents(group.balance),
         categories: group.categories?.map((cat: any) => ({
           ...cat,
-          received: cat.received / 100,
-          budgeted: cat.budgeted / 100,
-          spent: cat.spent / 100,
-          balance: cat.balance / 100,
+          received: convertCents(cat.received),
+          budgeted: convertCents(cat.budgeted),
+          spent: convertCents(cat.spent),
+          balance: convertCents(cat.balance),
         })),
       })),
     };

@@ -168,9 +168,7 @@ describe('SearchTransactionsDataFetcher', () => {
         pageSize: 50,
       };
 
-      vi.mocked(getPayees).mockResolvedValue([
-        { id: 'payee-1', name: 'Other Store' },
-      ] as any);
+      vi.mocked(getPayees).mockResolvedValue([{ id: 'payee-1', name: 'Other Store' }] as any);
 
       const result = await fetcher.fetch(input);
 

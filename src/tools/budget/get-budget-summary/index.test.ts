@@ -212,12 +212,7 @@ describe('get-budget-summary tool', () => {
     });
 
     it('should handle month range spanning multiple years', async () => {
-      vi.mocked(getBudgetMonths).mockResolvedValue([
-        '2024-11',
-        '2024-12',
-        '2025-01',
-        '2025-02',
-      ]);
+      vi.mocked(getBudgetMonths).mockResolvedValue(['2024-11', '2024-12', '2025-01', '2025-02']);
 
       const mockData = {
         month: '2024-11',

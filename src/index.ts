@@ -50,7 +50,7 @@ const LevelEnum = z.enum(LevelLiterals);
  * Creates a new MCP server instance with all tools, resources, and prompts configured.
  * Used for stdio mode and for creating per-connection server instances in SSE mode.
  */
-function createServerInstance(enableWrite: boolean = false): Server {
+function createServerInstance(enableWrite = false): Server {
   const server = new Server(
     {
       name: 'Actual Budget',
@@ -324,7 +324,7 @@ async function main(): Promise<void> {
         logger.info('sse', {
           message: `SSE connection established with session ID: ${sessionId}`,
           sessionId,
-          activeSessions: sessions.size
+          activeSessions: sessions.size,
         });
       } catch (error) {
         logger.error('sse', { message: 'Error establishing SSE stream', error });
@@ -353,7 +353,7 @@ async function main(): Promise<void> {
         logger.error('sse', {
           message: `No active session found for ID: ${sessionId}`,
           sessionId,
-          activeSessions: Array.from(sessions.keys())
+          activeSessions: Array.from(sessions.keys()),
         });
         res.status(404).json({ error: 'Session not found' });
         return;

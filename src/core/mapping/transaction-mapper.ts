@@ -2,6 +2,7 @@ import type { Transaction } from '../types/domain.js';
 
 /**
  * Maps a TransactionEntity from the Actual API into a domain Transaction
+ * NOTE: Amount is kept in cents (not converted to dollars) for internal consistency
  */
 export function mapTransaction(entity: any, categories: any[], payees: any[]): Transaction {
   const category = categories.find((c) => c.id === entity.category);
@@ -13,7 +14,7 @@ export function mapTransaction(entity: any, categories: any[], payees: any[]): T
     id: entity.id,
     account: entity.account,
     date: entity.date,
-    amount: entity.amount / 100, // Convert cents to currency units
+    amount: entity.amount, // Keep in cents for internal consistency
     notes: entity.notes,
     category: entity.category,
     category_name: category?.name,
