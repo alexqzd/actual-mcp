@@ -328,6 +328,7 @@ export async function importTransactions(
     category?: string | null;
     notes?: string;
     cleared?: boolean;
+    imported_id?: string;
     subtransactions?: Array<{
       amount: number;
       category?: string | null;
@@ -345,6 +346,7 @@ export async function importTransactions(
     category: t.category ?? undefined,
     notes: t.notes,
     cleared: t.cleared,
+    imported_id: t.imported_id,
     subtransactions: t.subtransactions?.map((st) => ({
       amount: st.amount,
       category: st.category ?? undefined,

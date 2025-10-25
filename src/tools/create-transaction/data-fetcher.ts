@@ -4,6 +4,7 @@ import { importTransactions } from '../../actual-api.js';
 import { convertToCents, validateAccount } from '../../core/transactions/index.js';
 import type { CreateTransactionInput, EntityCreationResult } from './types.js';
 import api from '@actual-app/api';
+import { randomUUID } from 'crypto';
 
 export class CreateTransactionDataFetcher {
   /**
@@ -31,6 +32,8 @@ export class CreateTransactionDataFetcher {
       notes: input.notes || '',
       cleared: input.cleared === undefined ? false : input.cleared,
       subtransactions,
+      // Generate a unique imported_id to allow duplicate transactions
+      imported_id: randomUUID(),
     };
 
     // Add the transaction
