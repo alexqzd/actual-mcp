@@ -44,6 +44,7 @@ import * as setBudgetCarryover from './budget/set-budget-carryover/index.js';
 import * as holdBudgetForNextMonth from './budget/hold-budget-for-next-month/index.js';
 import * as resetBudgetHold from './budget/reset-budget-hold/index.js';
 import * as searchTransactions from './search-transactions/index.js';
+import * as getCategoryBudgets from './budget/get-category-budgets/index.js';
 
 const readTools = [
   getTransactions,
@@ -57,6 +58,7 @@ const readTools = [
   // getRules, // We don't want the AI to see user rules yet
   listAvailableMonths,
   getBudgetMonth,
+  getCategoryBudgets,
 ];
 
 const writeTools = [
