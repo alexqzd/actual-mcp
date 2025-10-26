@@ -52,6 +52,17 @@ The Actual Budget MCP Server allows you to interact with your personal financial
 - **`update-rule`** - Update an existing transaction rule
 - **`delete-rule`** - Delete a transaction rule
 
+#### Budget Management
+
+- **`list-available-months`** - Get a list of all months with available budget data
+- **`get-budget-month`** - Get detailed budget data for a specific month with complete category breakdowns
+- **`get-budget-summary`** - Get high-level budget overview for a date range without category details
+- **`get-category-budgets`** - Get budget data for specific categories in a month or range of months (efficient for targeted queries)
+- **`set-budget-amount`** - Set the budget amount for a specific category in a given month
+- **`set-budget-carryover`** - Enable or disable budget carryover for a specific category
+- **`hold-budget-for-next-month`** - Hold a portion of the budget for the next month
+- **`reset-budget-hold`** - Reset the budget hold for a month
+
 ### Prompts
 
 - **`financial-insights`** - Generate insights and recommendations based on your financial data
