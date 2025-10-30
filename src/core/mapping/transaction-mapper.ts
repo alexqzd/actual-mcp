@@ -20,6 +20,7 @@ export function mapTransaction(entity: any, categories: any[], payees: any[]): T
     category_name: category?.name,
     payee: entity.payee,
     payee_name: payee?.name,
+    cleared: entity.cleared,
     subtransactions: entity.subtransactions
       ? entity.subtransactions.map((sub: any) => mapTransaction(sub, categories, payees))
       : undefined,

@@ -12,6 +12,7 @@ export class GetTransactionsMapper {
     category_name?: string;
     amount: string;
     notes: string;
+    cleared: boolean;
     subtransactions?: Array<{
       id: string;
       category: string;
@@ -26,6 +27,7 @@ export class GetTransactionsMapper {
       category: t.category_name || '(Uncategorized)',
       amount: formatAmount(t.amount),
       notes: t.notes || '',
+      cleared: t.cleared ?? false,
       subtransactions: t.subtransactions?.map((st) => ({
         id: st.id || '(No ID)',
         category: st.category_name || '(Uncategorized)',

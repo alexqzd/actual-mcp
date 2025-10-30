@@ -19,6 +19,7 @@ export interface Transaction {
   category?: string;
   category_name?: string;
   notes?: string;
+  cleared?: boolean;
   subtransactions?: Transaction[];
 }
 

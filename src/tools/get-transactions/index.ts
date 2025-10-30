@@ -3,11 +3,13 @@ import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { GetTransactionsInputParser } from './input-parser.js';
 import { GetTransactionsDataFetcher } from './data-fetcher.js';
 import { GetTransactionsMapper } from './transaction-mapper.js';
+import { GetTransactionsBalanceCalculator } from './balance-calculator.js';
 import { errorFromCatch } from '../../utils/response.js';
 import { buildQueryResponse } from '../../utils/report-builder.js';
 import { getDateRange } from '../../utils.js';
 import { GetTransactionsArgsSchema, type GetTransactionsArgs, type ToolInput } from '../../types.js';
 import { zodToJsonSchema } from 'zod-to-json-schema';
+import { fetchAllAccounts } from '../../core/data/fetch-accounts.js';
 
 export const schema = {
   name: 'get-transactions',
@@ -23,10 +25,25 @@ export async function handler(args: GetTransactionsArgs): Promise<CallToolResult
     const { accountId, startDate, endDate, minAmount, maxAmount, categoryId, payeeId, limit } = input;
     const { startDate: start, endDate: end } = getDateRange(startDate, endDate);
 
-    // Fetch transactions
-    const transactions = await new GetTransactionsDataFetcher().fetch(accountId, start, end);
-    let filtered = [...transactions];
+    // Fetch account information for balance calculation
+    const accounts = await fetchAllAccounts();
+    const account = accounts.find((a) => a.id === accountId);
+    if (!account) {
+      throw new Error(`Account with ID ${accountId} not found`);
+    }
 
+    // Fetch ALL transactions for the account (for accurate balance calculation)
+    // Use a wide date range to get all transactions
+    const allTransactions = await new GetTransactionsDataFetcher().fetch(accountId, '1900-01-01', '2100-12-31');
+
+    // Calculate account balance metadata from all transactions
+    const balanceCalculator = new GetTransactionsBalanceCalculator();
+    const accountBalance = balanceCalculator.calculateAccountBalance(account, allTransactions);
+
+    // Apply date filter
+    let filtered = allTransactions.filter((t) => t.date >= start && t.date <= end);
+
+    // Apply other filters
     if (minAmount !== undefined) {
       filtered = filtered.filter((t) => t.amount >= minAmount);
     }
@@ -43,6 +60,9 @@ export async function handler(args: GetTransactionsArgs): Promise<CallToolResult
       filtered = filtered.slice(0, limit);
     }
 
+    // Calculate filtered transactions total
+    const filteredTransactions = balanceCalculator.calculateFilteredTotal(filtered);
+
     // Map transactions for output
     const mapped = new GetTransactionsMapper().map(filtered);
 
@@ -56,10 +76,12 @@ export async function handler(args: GetTransactionsArgs): Promise<CallToolResult
     return buildQueryResponse({
       resourceType: 'transaction',
       data: mapped,
-      summary: `Found ${filtered.length} of ${transactions.length} transactions`,
+      summary: `Found ${filtered.length} of ${allTransactions.length} transactions`,
       metadata: {
+        accountBalance,
+        filteredTransactions,
         count: filtered.length,
-        period: { start: start, end: end },
+        period: { start, end },
         filters: Object.keys(filters).length > 0 ? filters : undefined,
       },
     });

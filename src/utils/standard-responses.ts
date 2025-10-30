@@ -41,6 +41,28 @@ export interface PaginationMetadata {
 }
 
 /**
+ * Account balance metadata (for transaction queries)
+ */
+export interface AccountBalanceMetadata {
+  /** Current account balance */
+  current: string;
+  /** Balance of cleared transactions only */
+  cleared: string;
+  /** Total of uncleared transactions */
+  uncleared: string;
+}
+
+/**
+ * Filtered transactions metadata (for transaction queries)
+ */
+export interface FilteredTransactionsMetadata {
+  /** Sum of filtered transactions */
+  totalAmount: string;
+  /** Number of filtered transactions */
+  count: number;
+}
+
+/**
  * Query-specific metadata
  */
 export interface QueryMetadata extends BaseMetadata {
@@ -56,6 +78,10 @@ export interface QueryMetadata extends BaseMetadata {
   period?: PeriodMetadata;
   /** Pagination information */
   pagination?: PaginationMetadata;
+  /** Account balance metadata (for transaction queries) */
+  accountBalance?: AccountBalanceMetadata;
+  /** Filtered transactions metadata (for transaction queries) */
+  filteredTransactions?: FilteredTransactionsMetadata;
 }
 
 /**
