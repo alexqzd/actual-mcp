@@ -10,6 +10,7 @@ import { getDateRange } from '../../utils.js';
 import { GetTransactionsArgsSchema, type GetTransactionsArgs, type ToolInput } from '../../types.js';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import { fetchAllAccounts } from '../../core/data/fetch-accounts.js';
+import { getAccountBalance } from '@actual-app/api';
 
 export const schema = {
   name: 'get-transactions',
@@ -25,20 +26,24 @@ export async function handler(args: GetTransactionsArgs): Promise<CallToolResult
     const { accountId, startDate, endDate, minAmount, maxAmount, categoryId, payeeId, limit } = input;
     const { startDate: start, endDate: end } = getDateRange(startDate, endDate);
 
-    // Fetch account information for balance calculation
+    // Fetch account information to verify it exists
     const accounts = await fetchAllAccounts();
     const account = accounts.find((a) => a.id === accountId);
     if (!account) {
       throw new Error(`Account with ID ${accountId} not found`);
     }
 
-    // Fetch ALL transactions for the account (for accurate balance calculation)
-    // Use a wide date range to get all transactions
-    const allTransactions = await new GetTransactionsDataFetcher().fetch(accountId, '1900-01-01', '2100-12-31');
+    // Fetch current account balance from API (most accurate source)
+    const currentBalance = await getAccountBalance(accountId);
+
+    // Fetch ALL transactions for the account (for balance calculations)
+    // Uses query builder to fetch all transactions without date restrictions
+    const dataFetcher = new GetTransactionsDataFetcher();
+    const allTransactions = await dataFetcher.fetchAllForAccount(accountId);
 
     // Calculate account balance metadata from all transactions
     const balanceCalculator = new GetTransactionsBalanceCalculator();
-    const accountBalance = balanceCalculator.calculateAccountBalance(account, allTransactions);
+    const accountBalance = balanceCalculator.calculateAccountBalance(currentBalance, allTransactions);
 
     // Apply date filter
     let filtered = allTransactions.filter((t) => t.date >= start && t.date <= end);

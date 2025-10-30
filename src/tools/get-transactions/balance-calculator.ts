@@ -1,5 +1,5 @@
 // Calculates balance metadata for get-transactions tool
-import type { Account, Transaction } from '../../types.js';
+import type { Transaction } from '../../types.js';
 import { formatAmount } from '../../utils.js';
 
 export interface BalanceMetadata {
@@ -20,13 +20,12 @@ export class GetTransactionsBalanceCalculator {
    * Note: Calculates balances from all transactions in the account, not just filtered ones.
    * This matches the Actual Budget desktop UI behavior.
    *
-   * @param account - The account to calculate balances for
+   * @param currentBalance - The current account balance from Actual API
    * @param allTransactions - All transactions for the account (no filters applied)
    * @returns Balance metadata with formatted amounts
    */
-  calculateAccountBalance(account: Account, allTransactions: Transaction[]): BalanceMetadata {
-    // Current balance comes from the account (sum of all transactions)
-    const currentBalance = account.balance ?? 0;
+  calculateAccountBalance(currentBalance: number, allTransactions: Transaction[]): BalanceMetadata {
+    // Current balance comes from the Actual API getAccountBalance()
 
     // Calculate balance considering only cleared transactions
     let clearedBalance = 0;
